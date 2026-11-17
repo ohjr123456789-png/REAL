@@ -51,6 +51,13 @@ h1{font-family:"Gowun Batang",serif;font-size:26px;margin:6px 0 2px}
 .chip.add{border-style:dashed;color:var(--rose-deep);background:transparent}
 .chip .fe{margin-left:2px;padding:0 4px;border-radius:6px;background:rgba(255,255,255,.25)}
 
+/* trash */
+.trash-note{background:var(--rose-soft);border-radius:14px;padding:12px 14px;font-size:14px;color:var(--rose-deep);margin-bottom:14px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.trash-card{cursor:default}
+.trash-card:hover{transform:none;border-color:transparent}
+.trash-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.trash-actions .btn{padding:7px 14px;font-size:14px}
+
 /* timeline */
 .month{font-family:"Gowun Batang",serif;font-weight:700;font-size:18px;margin:28px 0 12px;display:flex;align-items:center;gap:10px}
 .month::after{content:"";flex:1;height:1px;background:var(--line)}
@@ -307,9 +314,9 @@ function renderHeader(){
     const n = Math.round((now - start) / 86400000) + 1;
     $('#dday').innerHTML = (n >= 1 ? `D+${n.toLocaleString()}` : `D-${(1-n).toLocaleString()}`) + `<small>${fmtDate(settings.startDate)}부터</small>`;
   } else $('#dday').innerHTML = '';
-  const photos = entries.reduce((a,e)=>a + (e.media||[]).filter(m=>m.type==='image').length, 0);
-  const videos = entries.reduce((a,e)=>a + (e.media||[]).filter(m=>m.type==='video').length, 0);
-  $('#stats').textContent = loaded ? `추억 ${entries.length}개 · 사진 ${photos}장 · 영상 ${videos}개` : '';
+  const photos = live().reduce((a,e)=>a + (e.media||[]).filter(m=>m.type==='image').length, 0);
+  const videos = live().reduce((a,e)=>a + (e.media||[]).filter(m=>m.type==='video').length, 0);
+  $('#stats').textContent = loaded ? `추억 ${live().length}개 · 사진 ${photos}장 · 영상 ${videos}개` : '';
 }
 
 /* ---------- list ---------- */
@@ -358,18 +365,56 @@ function makePoster(file){
     v.onerror = () => done(null);
   });
 }
+function live(){ return entries.filter(e => !e.deletedAt); }
+function trashed(){ return entries.filter(e => e.deletedAt); }
+async function purgeEntry(e){
+  await db.doc('entries/' + e.id).delete();
+  for(const m of (e.media||[])) for(const id of assetIds(m)) { try{ await assets?.delete(id); }catch(_){} }
+}
+function renderTrash(list){
+  const items = trashed().sort((a,b) => (b.deletedAt||0) - (a.deletedAt||0));
+  if(!items.length){ list.innerHTML = '<div class="empty"><div class="big">🗑️</div><p>휴지통이 비어 있어요.</p></div>'; return; }
+  list.innerHTML = `<div class="trash-note"><span>삭제한 기록이에요. 복원하거나 영구 삭제할 수 있어요.<br>영구 삭제하면 사진·영상까지 지워지고 되돌릴 수 없어요.</span><button class="btn danger" id="emptyTrash">휴지통 비우기</button></div>` +
+    items.map(e => {
+      const media = e.media || [], cover = media.find(x => x.type==='image') || media[0];
+      const days = Math.max(0, Math.floor((Date.now() - e.deletedAt) / 86400000));
+      return `<div class="card trash-card" data-id="${esc(e.id)}">
+        <div class="cover">${cover ? mediaTag(cover) : esc(e.mood || '💗')}</div>
+        <div class="card-body">
+          <div class="card-date">${esc(fmtDate(e.date))} · ${days ? days + '일 전' : '오늘'} 삭제</div>
+          <div class="card-title"><span>${esc(e.title || '제목 없는 하루')}</span></div>
+          <div class="card-text">${esc(e.text || '')}</div>
+          <div class="trash-actions"><button class="btn" data-restore>복원</button><button class="btn danger" data-purge>영구 삭제</button></div>
+        </div></div>`;
+    }).join('');
+  hydrate(list);
+  list.querySelectorAll('.trash-card').forEach(c => {
+    const e = entries.find(x => x.id === c.dataset.id); if(!e) return;
+    c.querySelector('[data-restore]').onclick = async () => {
+      try{ await db.doc('entries/' + e.id).update({ deletedAt: 0 }); toast('복원했어요'); }
+      catch(err){ toast('복원하지 못했어요 (' + (err.code||'오류') + ')'); }
+    };
+    c.querySelector('[data-purge]').onclick = () => askConfirm(`'${esc(e.title || '이 기록')}'을(를) 영구 삭제할까요?<br><small style="color:var(--muted)">사진·영상도 함께 지워지고 되돌릴 수 없어요.</small>`, async () => {
+      try{ await purgeEntry(e); toast('영구 삭제했어요'); }catch(err){ toast('삭제하지 못했어요 (' + (err.code||'오류') + ')'); }
+    }, '영구 삭제할게요');
+  });
+  $('#emptyTrash').onclick = () => askConfirm(`휴지통의 기록 ${items.length}개를 모두 영구 삭제할까요?<br><small style="color:var(--muted)">되돌릴 수 없어요.</small>`, async () => {
+    try{ for(const e of items) await purgeEntry(e); toast('휴지통을 비웠어요'); }catch(err){ toast('삭제하지 못했어요 (' + (err.code||'오류') + ')'); }
+  }, '모두 삭제할게요');
+}
 const fid = e => folders.some(f => f.id === e.folderId) ? e.folderId : '';
 function renderFolders(){
   const box = $('#folders');
   if(!loaded){ box.innerHTML = ''; return; }
-  const cnt = id => entries.filter(e => fid(e) === id).length;
-  let h = `<button class="chip ${curFolder==='all'?'on':''}" data-f="all">전체 <i>${entries.length}</i></button>`;
+  const cnt = id => live().filter(e => fid(e) === id).length;
+  let h = `<button class="chip ${curFolder==='all'?'on':''}" data-f="all">전체 <i>${live().length}</i></button>`;
   for(const f of folders){
     const on = curFolder === f.id;
     h += `<button class="chip ${on?'on':''}" data-f="${esc(f.id)}">📁 ${esc(f.name)} <i>${cnt(f.id)}</i>${on && editable ? `<span class="fe" data-edit="${esc(f.id)}" title="이름 수정·삭제">✎</span>` : ''}</button>`;
   }
   if(folders.length && cnt('')) h += `<button class="chip ${curFolder==='none'?'on':''}" data-f="none">폴더 없음 <i>${cnt('')}</i></button>`;
   if(editable) h += `<button class="chip add" id="addFolder">＋ 폴더</button>`;
+  if(trashed().length || curFolder === 'trash') h += `<button class="chip ${curFolder==='trash'?'on':''}" data-f="trash">🗑 휴지통 <i>${trashed().length}</i></button>`;
   box.innerHTML = h;
   box.querySelectorAll('.chip[data-f]').forEach(c => c.onclick = e => {
     const ed2 = e.target.closest('.fe');
@@ -382,10 +427,11 @@ function render(){
   renderHeader(); renderFolders();
   const list = $('#list');
   if(!loaded){ list.innerHTML = '<div class="empty"><p>불러오는 중…</p></div>'; return; }
+  if(curFolder === 'trash'){ renderTrash(list); return; }
   const q = $('#search').value.trim().toLowerCase();
-  const shown = entries.filter(e => (curFolder === 'all' || (curFolder === 'none' ? fid(e) === '' : fid(e) === curFolder))
+  const shown = live().filter(e => (curFolder === 'all' || (curFolder === 'none' ? fid(e) === '' : fid(e) === curFolder))
     && (!q || [e.title,e.place,e.text].some(v => (v||'').toLowerCase().includes(q))));
-  if(!entries.length){
+  if(!live().length){
     list.innerHTML = `<div class="empty"><div class="big">💌</div><p>아직 기록이 없어요.<br>첫 추억부터 남겨볼까요?</p>${editable?'<button class="btn" id="emptyNew">첫 기록 쓰기</button>':''}</div>`;
     const b = $('#emptyNew'); if(b) b.onclick = () => openEditor(null);
     return;
@@ -437,18 +483,17 @@ $('#vClose').onclick = () => close('#viewer');
 $('#vEdit').onclick = () => { const e = entries.find(x=>x.id===viewingId); close('#viewer'); if(e) openEditor(e); };
 $('#vDelete').onclick = () => {
   const e = entries.find(x=>x.id===viewingId); if(!e) return;
-  askConfirm(`'${e.title || '이 기록'}'을(를) 삭제할까요?<br><small style="color:var(--muted)">사진·영상도 함께 지워져요.</small>`, async () => {
+  askConfirm(`'${esc(e.title || '이 기록')}'을(를) 휴지통으로 옮길까요?<br><small style="color:var(--muted)">휴지통에서 언제든 복원할 수 있어요.</small>`, async () => {
     try{
-      await db.doc('entries/' + e.id).delete();
-      for(const m of (e.media||[])) for(const id of assetIds(m)) { try{ await assets?.delete(id); }catch(_){} }
-      close('#viewer'); toast('삭제했어요');
+      await db.doc('entries/' + e.id).update({ deletedAt: Date.now() });
+      close('#viewer'); toast('휴지통으로 옮겼어요');
     }catch(err){ toast('삭제하지 못했어요 (' + (err.code||'오류') + ')'); }
-  });
+  }, '휴지통으로 옮길게요');
 };
 
 /* ---------- confirm ---------- */
 let confirmFn = null;
-function askConfirm(html, fn){ $('#confirmMsg').innerHTML = html; confirmFn = fn; open('#confirmBox'); }
+function askConfirm(html, fn, yes = '삭제할게요'){ $('#confirmMsg').innerHTML = html; confirmFn = fn; $('#cYes').textContent = yes; open('#confirmBox'); }
 $('#cNo').onclick = () => close('#confirmBox');
 $('#cYes').onclick = async () => { close('#confirmBox'); if(confirmFn) await confirmFn(); };
 
@@ -680,7 +725,7 @@ $('#folderForm').addEventListener('submit', async e => {
 });
 $('#fDelete').onclick = () => {
   const f = editingFolder; if(!f) return;
-  const n = entries.filter(e => fid(e) === f.id).length;
+  const n = live().filter(e => fid(e) === f.id).length;
   close('#folderBox');
   askConfirm(`'${esc(f.name)}' 폴더를 삭제할까요?<br><small style="color:var(--muted)">${n ? `안의 기록 ${n}개는 지워지지 않고 '폴더 없음'으로 옮겨져요.` : '안의 기록은 지워지지 않아요.'}</small>`, async () => {
     try{
@@ -703,11 +748,11 @@ function startApp(){
     entries = snap.docs.map(d => ({ id: d.id, ...d.data() }))
       .sort((a,b) => (b.date||'').localeCompare(a.date||'') || (b.createdAt||0) - (a.createdAt||0));
     loaded = true; render();
-    if(viewingId && $('#viewer').classList.contains('open') && !entries.find(x=>x.id===viewingId)) close('#viewer');
+    if(viewingId && $('#viewer').classList.contains('open') && !entries.find(x=>x.id===viewingId && !x.deletedAt)) close('#viewer');
   }, err => { clearTimeout(timer); loaded = true; setStatus('기록을 불러오지 못했어요. 로그인 상태나 Firestore 규칙을 확인해 주세요. (' + (err.code||'오류') + ')'); render(); });
   db.collection('folders').onSnapshot(snap => {
     folders = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (a.createdAt||0) - (b.createdAt||0));
-    if(curFolder !== 'all' && curFolder !== 'none' && !folders.some(f => f.id === curFolder)) curFolder = 'all';
+    if(curFolder !== 'all' && curFolder !== 'none' && curFolder !== 'trash' && !folders.some(f => f.id === curFolder)) curFolder = 'all';
     render();
   }, () => {});
   db.doc('settings/main').onSnapshot(s => { settings = s.exists ? s.data() : {}; renderHeader(); }, () => {});
