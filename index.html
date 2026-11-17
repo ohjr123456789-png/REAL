@@ -199,8 +199,6 @@ h1{font-family:"Gowun Batang",serif;font-size:26px;margin:6px 0 2px}
     <div class="field"><label for="sStart">처음 만난 날 (사귄 날)</label><input id="sStart" type="date"></div>
     <div class="field"><label for="sTitle">보관소 이름</label><input id="sTitle" placeholder="기록보관소"></div>
     <div class="actions">
-      <button class="btn danger" id="sLogout">로그아웃</button>
-      <span class="spacer"></span>
       <button class="btn ghost" id="sCancel">취소</button>
       <button class="btn" id="sSave">저장</button>
     </div>
@@ -218,17 +216,6 @@ h1{font-family:"Gowun Batang",serif;font-size:26px;margin:6px 0 2px}
       <button type="button" class="btn ghost" id="fCancel">취소</button>
       <button type="submit" class="btn" id="fSave">저장</button>
     </div>
-  </form>
-</div>
-
-<!-- login -->
-<div class="overlay" id="loginBox" style="align-items:center;background:var(--bg)">
-  <form class="sheet" id="loginForm" style="max-width:380px" autocomplete="on">
-    <h2 style="text-align:center">💌 우리의 기록보관소</h2>
-    <div class="field"><label for="lEmail">이메일</label><input id="lEmail" type="email" autocomplete="username" required></div>
-    <div class="field"><label for="lPw">비밀번호</label><input id="lPw" type="password" autocomplete="current-password" required></div>
-    <div class="status" id="loginMsg"></div>
-    <div class="actions"><button class="btn" id="lBtn" type="submit" style="width:100%">들어가기</button></div>
   </form>
 </div>
 
@@ -708,7 +695,6 @@ $('#fDelete').onclick = () => {
 };
 
 /* ---------- init ---------- */
-$('#sLogout').onclick = async () => { try{ await firebase.auth().signOut(); }catch(_){} location.reload(); };
 
 function startApp(){
   const timer = setTimeout(() => { if(!loaded) setStatus('기록을 아직 불러오지 못했어요. 인터넷 연결을 확인해 주세요.'); }, 10000);
@@ -749,23 +735,15 @@ render();
   let started = false;
   auth.onAuthStateChanged(user => {
     if(user){
-      close('#loginBox');
       if(!started){ started = true; startApp(); }
     } else {
-      open('#loginBox');
+      auth.signInAnonymously().catch(err => {
+        loaded = true; editable = false; $('#newBtn').disabled = true;
+        const off = ['auth/operation-not-allowed','auth/admin-restricted-operation'].includes(err.code);
+        setStatus(off ? 'Firebase 콘솔 → Authentication → 로그인 방법에서 "익명"을 사용 설정해 주세요.' : '접속하지 못했어요. 인터넷 연결을 확인하고 다시 열어 주세요. (' + (err.code||'오류') + ')');
+        render();
+      });
     }
-  });
-
-  $('#loginForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    $('#loginMsg').textContent = ''; $('#lBtn').disabled = true;
-    try{
-      await auth.signInWithEmailAndPassword($('#lEmail').value.trim(), $('#lPw').value);
-    }catch(err){
-      const bad = ['auth/invalid-credential','auth/wrong-password','auth/user-not-found','auth/invalid-email'].includes(err.code);
-      $('#loginMsg').textContent = bad ? '이메일이나 비밀번호가 맞지 않아요.' : '로그인하지 못했어요. (' + (err.code||'오류') + ')';
-    }
-    $('#lBtn').disabled = false;
   });
 })();
 </script>
