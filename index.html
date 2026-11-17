@@ -42,6 +42,15 @@ h1{font-family:"Gowun Batang",serif;font-size:26px;margin:6px 0 2px}
 .status{font-size:14px;color:var(--rose-deep);text-align:center;min-height:0}
 .status:not(:empty){padding:10px;background:var(--rose-soft);border-radius:12px;margin:8px 0}
 
+/* folders */
+.folders{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px;margin-bottom:4px;scrollbar-width:thin}
+.chip{flex:0 0 auto;border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:7px 14px;font-size:14px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.chip i{font-style:normal;font-size:12px;color:var(--muted)}
+.chip.on{background:var(--rose);border-color:var(--rose);color:#fff}
+.chip.on i{color:#ffe3e8}
+.chip.add{border-style:dashed;color:var(--rose-deep);background:transparent}
+.chip .fe{margin-left:2px;padding:0 4px;border-radius:6px;background:rgba(255,255,255,.25)}
+
 /* timeline */
 .month{font-family:"Gowun Batang",serif;font-weight:700;font-size:18px;margin:28px 0 12px;display:flex;align-items:center;gap:10px}
 .month::after{content:"";flex:1;height:1px;background:var(--line)}
@@ -66,8 +75,8 @@ h1{font-family:"Gowun Batang",serif;font-size:26px;margin:6px 0 2px}
 .sheet h2{font-family:"Gowun Batang",serif;margin:0 0 16px;font-size:22px}
 .field{margin-bottom:14px}
 .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
-.field input,.field textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff;outline:none}
-.field input:focus,.field textarea:focus{border-color:var(--rose)}
+.field input,.field textarea,.field select{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff;outline:none}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--rose)}
 .field textarea{min-height:180px;resize:vertical;line-height:1.7}
 .row{display:flex;gap:12px}
 .row .field{flex:1}
@@ -139,6 +148,8 @@ h1{font-family:"Gowun Batang",serif;font-size:26px;margin:6px 0 2px}
     <button class="btn" id="newBtn">＋<span> 새 기록</span></button>
   </div>
 
+  <div class="folders" id="folders"></div>
+
   <main id="list"><div class="empty"><p>불러오는 중…</p></div></main>
 </div>
 
@@ -150,13 +161,14 @@ h1{font-family:"Gowun Batang",serif;font-size:26px;margin:6px 0 2px}
       <div class="field"><label for="edDate">날짜</label><input id="edDate" type="date"></div>
       <div class="field"><label for="edPlace">장소</label><input id="edPlace" placeholder="예) 성수동 카페, 한강공원"></div>
     </div>
+    <div class="field"><label for="edFolder">폴더</label><select id="edFolder"></select></div>
     <div class="field"><label for="edTitle">제목</label><input id="edTitle" placeholder="오늘을 한 줄로"></div>
     <div class="field"><label>오늘의 기분</label><div class="moods" id="moods"></div></div>
     <div class="field"><label for="edText">그날의 일기</label><textarea id="edText" placeholder="오늘 있었던 일, 나눈 이야기, 기억하고 싶은 순간들…"></textarea></div>
     <div class="field">
       <label>사진 · 영상</label>
       <div class="media-grid" id="edMedia"></div>
-      <div class="drop-hint">여러 개를 한 번에 고를 수 있어요. 사진은 자동으로 줄여서 올려요. 영상은 최대 500MB까지, 큰 영상은 시간이 좀 걸려요</div>
+      <div class="drop-hint">여러 개를 한 번에 고를 수 있어요. 사진은 자동으로 줄여서 올려요. 영상은 최대 100MB까지, 작게 나눠서 올리느라 시간이 좀 걸려요</div>
       <input type="file" id="fileInput" accept="image/*,video/*" multiple hidden>
     </div>
     <div class="actions">
@@ -195,6 +207,20 @@ h1{font-family:"Gowun Batang",serif;font-size:26px;margin:6px 0 2px}
   </div>
 </div>
 
+<!-- folder -->
+<div class="overlay" id="folderBox" style="align-items:center">
+  <form class="sheet" id="folderForm" style="max-width:380px">
+    <h2 id="fHeading">새 폴더</h2>
+    <div class="field"><label for="fName">폴더 이름</label><input id="fName" maxlength="30" placeholder="예) 2026 여행, 기념일"></div>
+    <div class="actions">
+      <button type="button" class="btn danger" id="fDelete">삭제</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost" id="fCancel">취소</button>
+      <button type="submit" class="btn" id="fSave">저장</button>
+    </div>
+  </form>
+</div>
+
 <!-- login -->
 <div class="overlay" id="loginBox" style="align-items:center;background:var(--bg)">
   <form class="sheet" id="loginForm" style="max-width:380px" autocomplete="on">
@@ -231,25 +257,45 @@ h1{font-family:"Gowun Batang",serif;font-size:26px;margin:6px 0 2px}
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-storage-compat.js"></script>
 <script>
 /* ★ 여기에 Firebase 콘솔의 firebaseConfig 값을 붙여넣으세요 ★ */
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.firebasestorage.app",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDQGVdROz37AOmnQN4Q91P8m0SjsFMI71o",
+  authDomain: "logreal-f9a10.firebaseapp.com",
+  projectId: "logreal-f9a10",
+  storageBucket: "logreal-f9a10.firebasestorage.app",
+  messagingSenderId: "485714562871",
+  appId: "1:485714562871:web:05c7b7d97f33dd6c9dd4b2"
 };
 
 const $ = s => document.querySelector(s);
 const MOODS = ['🥰','😊','😂','🥹','😍','😌','😴','😤','😢','🍽️','☕','🎬','🌸','🌙'];
 let db = null, assets = null, entries = [], settings = {}, loaded = false, editable = true;
 let viewingId = null;
+let folders = [], curFolder = 'all'; // 'all' | 'none' | 폴더 id
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const blobUrl = id => id; // Firebase Storage 다운로드 주소를 그대로 사용
+/* 사진·영상은 Firestore 'media' 컬렉션에 1MB 미만 조각으로 저장해요 (Storage 없이 무료로 사용) */
+const MAXDOC = 880 * 1024;
+async function fetchDoc(id){
+  const d = await db.collection('media').doc(id).get();
+  if(!d.exists) throw new Error('missing');
+  const x = d.data();
+  return new Blob([x.data.toUint8Array()], { type: x.type || 'application/octet-stream' });
+}
+const urlCache = new Map();
+function loadUrl(id){
+  if(!urlCache.has(id)) urlCache.set(id, fetchDoc(id).then(b => URL.createObjectURL(b)).catch(e => { urlCache.delete(id); throw e; }));
+  return urlCache.get(id);
+}
+function fill(el){ loadUrl(el.dataset.mid).then(u => { el.src = u; }).catch(() => { el.dataset.done = ''; }); }
+const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if(e.isIntersecting){ io.unobserve(e.target); fill(e.target); } }), { rootMargin: '300px' }) : null;
+function hydrate(root){
+  (root || document).querySelectorAll('img[data-mid]').forEach(el => {
+    if(el.dataset.done) return; el.dataset.done = '1';
+    io ? io.observe(el) : fill(el);
+  });
+}
 const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); };
 const WD = ['일','월','화','수','목','금','토'];
 function fmtDate(s){
@@ -281,28 +327,25 @@ function renderHeader(){
 
 /* ---------- list ---------- */
 function mediaTag(m, extra=''){
-  if(m.type !== 'video') return `<img src="${esc(blobUrl(m.id))}" alt="" loading="lazy" ${extra}>`;
-  if(m.poster) return `<img src="${esc(blobUrl(m.poster))}" alt="" loading="lazy" ${extra}>`;
-  if(m.id) return `<video src="${esc(blobUrl(m.id))}#t=0.1" preload="metadata" muted playsinline ${extra}></video>`;
+  if(m.type !== 'video'){ const id = m.thumb || m.id; return id ? `<img data-mid="${esc(id)}" alt="" ${extra}>` : ''; }
+  if(m.poster) return `<img data-mid="${esc(m.poster)}" alt="" ${extra}>`;
   return `<div class="vph">🎬</div>`;
 }
 /* every stored file a media item uses (single file, chunks of a big video, poster) */
-const assetIds = m => [m.id, m.poster, ...(m.chunks||[])].filter(Boolean);
-const CHUNK = Infinity; // Firebase Storage는 큰 파일도 한 번에 올릴 수 있어요
-const MAX_VIDEO = 500 * 1024 * 1024;
+const assetIds = m => [m.id, m.thumb, m.poster, ...(m.chunks||[])].filter(Boolean);
+const CHUNK = MAXDOC; // 영상은 1MB보다 작은 조각으로 잘라서 저장
+const MAX_VIDEO = 100 * 1024 * 1024;
 const fmtMB = b => (b / 1048576).toFixed(b > 10485760 ? 0 : 1) + 'MB';
 /* big videos are stored in pieces; fetch and join them back into one playable file */
 const vidCache = new Map();
 async function videoSrc(m, onProg){
-  if(!m.chunks) return blobUrl(m.id);
-  const key = m.chunks[0];
+  const ids = m.chunks || [m.id];
+  const key = ids[0];
   if(vidCache.has(key)) return vidCache.get(key);
   const parts = [];
-  for(let i = 0; i < m.chunks.length; i++){
-    onProg && onProg(i, m.chunks.length);
-    const r = await fetch(blobUrl(m.chunks[i]));
-    if(!r.ok) throw new Error('chunk ' + i);
-    parts.push(await r.blob());
+  for(let i = 0; i < ids.length; i++){
+    onProg && onProg(i, ids.length);
+    parts.push(await fetchDoc(ids[i]));
   }
   const url = URL.createObjectURL(new Blob(parts, { type: m.mime || 'video/mp4' }));
   vidCache.set(key, url);
@@ -328,18 +371,43 @@ function makePoster(file){
     v.onerror = () => done(null);
   });
 }
+const fid = e => folders.some(f => f.id === e.folderId) ? e.folderId : '';
+function renderFolders(){
+  const box = $('#folders');
+  if(!loaded){ box.innerHTML = ''; return; }
+  const cnt = id => entries.filter(e => fid(e) === id).length;
+  let h = `<button class="chip ${curFolder==='all'?'on':''}" data-f="all">전체 <i>${entries.length}</i></button>`;
+  for(const f of folders){
+    const on = curFolder === f.id;
+    h += `<button class="chip ${on?'on':''}" data-f="${esc(f.id)}">📁 ${esc(f.name)} <i>${cnt(f.id)}</i>${on && editable ? `<span class="fe" data-edit="${esc(f.id)}" title="이름 수정·삭제">✎</span>` : ''}</button>`;
+  }
+  if(folders.length && cnt('')) h += `<button class="chip ${curFolder==='none'?'on':''}" data-f="none">폴더 없음 <i>${cnt('')}</i></button>`;
+  if(editable) h += `<button class="chip add" id="addFolder">＋ 폴더</button>`;
+  box.innerHTML = h;
+  box.querySelectorAll('.chip[data-f]').forEach(c => c.onclick = e => {
+    const ed2 = e.target.closest('.fe');
+    if(ed2){ const f = folders.find(x => x.id === ed2.dataset.edit); if(f) openFolderBox(f); return; }
+    curFolder = c.dataset.f; render();
+  });
+  const add = $('#addFolder'); if(add) add.onclick = () => openFolderBox(null);
+}
 function render(){
-  renderHeader();
+  renderHeader(); renderFolders();
   const list = $('#list');
   if(!loaded){ list.innerHTML = '<div class="empty"><p>불러오는 중…</p></div>'; return; }
   const q = $('#search').value.trim().toLowerCase();
-  const shown = entries.filter(e => !q || [e.title,e.place,e.text].some(v => (v||'').toLowerCase().includes(q)));
+  const shown = entries.filter(e => (curFolder === 'all' || (curFolder === 'none' ? fid(e) === '' : fid(e) === curFolder))
+    && (!q || [e.title,e.place,e.text].some(v => (v||'').toLowerCase().includes(q))));
   if(!entries.length){
     list.innerHTML = `<div class="empty"><div class="big">💌</div><p>아직 기록이 없어요.<br>첫 추억부터 남겨볼까요?</p>${editable?'<button class="btn" id="emptyNew">첫 기록 쓰기</button>':''}</div>`;
     const b = $('#emptyNew'); if(b) b.onclick = () => openEditor(null);
     return;
   }
-  if(!shown.length){ list.innerHTML = '<div class="empty"><p>찾는 기록이 없어요.</p></div>'; return; }
+  if(!shown.length){
+    list.innerHTML = `<div class="empty"><p>${q ? '찾는 기록이 없어요.' : '이 폴더에는 아직 기록이 없어요.'}</p>${!q && editable ? '<button class="btn" id="emptyNew2">이 폴더에 기록 쓰기</button>' : ''}</div>`;
+    const b2 = $('#emptyNew2'); if(b2) b2.onclick = () => openEditor(null);
+    return;
+  }
   let html = '', lastMonth = '';
   for(const e of shown){
     const [y,m] = (e.date||'').split('-');
@@ -356,7 +424,7 @@ function render(){
         <div class="card-text">${esc(e.text || '')}</div>
       </div></button>`;
   }
-  list.innerHTML = html;
+  list.innerHTML = html; hydrate(list);
   list.querySelectorAll('.card').forEach(c => c.onclick = () => openViewer(c.dataset.id));
 }
 $('#search').addEventListener('input', render);
@@ -373,6 +441,7 @@ function openViewer(id){
     ${media.length?`<div class="v-gallery">${media.map((m,i)=>`<div class="thumb" data-i="${i}">${mediaTag(m)}${m.type==='video'?'<span class="badge">▶ 영상</span>':''}</div>`).join('')}</div>`:''}
     ${e.text?`<div class="v-text">${esc(e.text)}</div>`:''}`;
   $('#vBody').querySelectorAll('.thumb').forEach(t => t.onclick = () => openLightbox(media, Number(t.dataset.i)));
+  hydrate($('#vBody'));
   $('#vEdit').style.display = editable ? '' : 'none';
   $('#vDelete').style.display = editable ? '' : 'none';
   open('#viewer');
@@ -402,9 +471,11 @@ function openLightbox(items, i){ lbItems = items; lbIdx = i; drawLb(); open('#li
 let lbToken = 0;
 async function drawLb(){
   const m = lbItems[lbIdx], tok = ++lbToken, box = $('#lbMedia');
-  if(m.type !== 'video') box.innerHTML = `<img src="${esc(blobUrl(m.id))}" alt="">`;
-  else if(!m.chunks) box.innerHTML = `<video src="${esc(blobUrl(m.id))}" controls autoplay playsinline></video>`;
-  else {
+  if(m.type !== 'video'){
+    box.innerHTML = `<div class="lb-msg">불러오는 중…</div>`;
+    loadUrl(m.id).then(u => { if(tok === lbToken) box.innerHTML = `<img src="${u}" alt="">`; })
+      .catch(() => { if(tok === lbToken) box.innerHTML = `<div class="lb-msg">사진을 불러오지 못했어요</div>`; });
+  } else {
     box.innerHTML = `<div class="lb-msg">영상 불러오는 중…</div>`;
     try{
       const src = await videoSrc(m, (i,n) => { if(tok===lbToken) box.innerHTML = `<div class="lb-msg">영상 불러오는 중… ${Math.round(i/n*100)}%</div>`; });
@@ -435,6 +506,8 @@ function openEditor(entry){
   $('#edPlace').value = entry?.place || '';
   $('#edTitle').value = entry?.title || '';
   $('#edText').value = entry?.text || '';
+  $('#edFolder').innerHTML = '<option value="">폴더 없음</option>' + folders.map(f => `<option value="${esc(f.id)}">${esc(f.name)}</option>`).join('');
+  $('#edFolder').value = entry ? fid(entry) : (folders.some(f => f.id === curFolder) ? curFolder : '');
   renderMoods(); renderEdMedia();
   open('#editor');
   setTimeout(()=>$('#edTitle').focus(), 50);
@@ -452,6 +525,7 @@ function renderEdMedia(){
     return `<div class="thumb">${tag}${m.type==='video'?`<span class="badge">▶${m.size?' '+fmtMB(m.size):''}</span>`:''}${m.uploading?`<div class="prog">${esc(m.progress||'올리는 중…')}</div>`:''}<button type="button" class="x" data-i="${i}" ${m.uploading?'disabled':''} aria-label="빼기">✕</button></div>`;
   }).join('') + `<button type="button" class="add-media" id="addMedia"><b>＋</b>사진·영상</button>`;
   g.querySelectorAll('.x').forEach(b => b.onclick = () => removeEdMedia(Number(b.dataset.i)));
+  hydrate(g);
   $('#addMedia').onclick = () => {
     if(!assets){ toast('사진·영상은 편집 권한이 있는 사람만 올릴 수 있어요'); return; }
     $('#fileInput').click();
@@ -464,17 +538,29 @@ async function removeEdMedia(i){
   for(const id of assetIds(m)) if(ed.newly.includes(id)){ ed.newly = ed.newly.filter(x=>x!==id); try{ await assets.delete(id); }catch(_){} }
   renderEdMedia();
 }
+function drawTo(bmp, max){
+  const r = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(bmp.width * r)); c.height = Math.max(1, Math.round(bmp.height * r));
+  const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(bmp, 0, 0, c.width, c.height);
+  return c;
+}
 async function compress(file){
   if(!file.type.startsWith('image/') || file.type === 'image/gif') return file;
   try{
     const bmp = await createImageBitmap(file, {imageOrientation:'from-image'});
-    const max = 2000, r = Math.min(1, max / Math.max(bmp.width, bmp.height));
-    const w = Math.round(bmp.width * r), h = Math.round(bmp.height * r);
-    const c = document.createElement('canvas'); c.width = w; c.height = h;
-    c.getContext('2d').drawImage(bmp, 0, 0, w, h);
-    const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.86));
-    return blob && blob.size < file.size ? blob : file;
+    let best = null;
+    for(const [max, q] of [[2000,.85],[1600,.78],[1280,.72],[1024,.66],[800,.6]]){
+      best = await new Promise(res => drawTo(bmp, max).toBlob(res, 'image/jpeg', q));
+      if(best && best.size <= MAXDOC) break;
+    }
+    return best || file;
   }catch(_){ return file; }
+}
+async function makeThumb(file){
+  try{
+    const bmp = await createImageBitmap(file, {imageOrientation:'from-image'});
+    return await new Promise(res => drawTo(bmp, 480).toBlob(res, 'image/jpeg', 0.72));
+  }catch(_){ return null; }
 }
 $('#fileInput').addEventListener('change', async e => {
   const files = [...e.target.files]; e.target.value = '';
@@ -497,10 +583,11 @@ $('#fileInput').addEventListener('change', async e => {
       if(item.type === 'image'){
         item.progress = '올리는 중…'; redraw();
         const blob = await compress(f);
-        if(blob.size > 20 * 1024 * 1024) throw new Error('사진이 너무 커서 올릴 수 없어요');
+        if(blob.size > MAXDOC) throw new Error('사진이 너무 커서 올릴 수 없어요');
         item.id = await up(blob, item);
+        if(f.type !== 'image/gif'){ const th = await makeThumb(f); if(th){ try{ item.thumb = await up(th, item); }catch(err){ if(session.cancelled) throw err; } } }
       } else {
-        if(f.size > MAX_VIDEO) throw new Error('영상이 너무 커요 (최대 500MB)');
+        if(f.size > MAX_VIDEO) throw new Error('영상이 너무 커요 (최대 100MB)');
         item.progress = '준비 중…'; redraw();
         const poster = await makePoster(f);
         if(poster){ try{ item.poster = await up(poster, item); }catch(err){ if(session.cancelled) throw err; } }
@@ -522,7 +609,7 @@ $('#fileInput').addEventListener('change', async e => {
       session.media = session.media.filter(x => x !== item);
       for(const id of assetIds(item)){ try{ await assets.delete(id); }catch(_){} }
       if(!session.cancelled){
-        const msg = err.code === 'storage/quota-exceeded' || /quota|exceed|limit/i.test(err.message||'') ? '저장 공간이 부족해요' : (err.message || '올리지 못했어요');
+        const msg = err.code === 'storage/quota-exceeded' || err.code === 'resource-exhausted' || /quota|exceed|limit/i.test(err.message||'') ? '저장 공간이 부족해요' : (err.message || '올리지 못했어요');
         toast((f.name || '파일') + ': ' + msg);
       }
     }
@@ -541,7 +628,8 @@ $('#edSave').onclick = async () => {
     title: $('#edTitle').value.trim(),
     text: $('#edText').value,
     mood: ed.mood,
-    media: ed.media.map(m => { const o = { type: m.type }; for(const k of ['id','poster','chunks','mime','size']) if(m[k] != null) o[k] = m[k]; return o; }),
+    folderId: $('#edFolder').value,
+    media: ed.media.map(m => { const o = { type: m.type }; for(const k of ['id','thumb','poster','chunks','mime','size']) if(m[k] != null) o[k] = m[k]; return o; }),
     createdAt: ed.original?.createdAt || Date.now(),
     updatedAt: Date.now()
   };
@@ -580,6 +668,45 @@ document.querySelectorAll('.overlay').forEach(o => o.addEventListener('mousedown
   if(e.target === o && o.id !== 'editor' && o.id !== 'lightbox' && o.id !== 'loginBox') close('#' + o.id);
 }));
 
+/* ---------- folders ---------- */
+let editingFolder = null;
+function openFolderBox(f){
+  if(!db){ toast('지금은 저장할 수 없는 화면이에요'); return; }
+  editingFolder = f || null;
+  $('#fHeading').textContent = f ? '폴더 이름 수정' : '새 폴더';
+  $('#fName').value = f ? f.name : '';
+  $('#fDelete').style.display = f ? '' : 'none';
+  open('#folderBox'); setTimeout(() => $('#fName').focus(), 50);
+}
+$('#fCancel').onclick = () => close('#folderBox');
+$('#folderForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const name = $('#fName').value.trim();
+  if(!name){ toast('폴더 이름을 적어주세요'); return; }
+  $('#fSave').disabled = true;
+  try{
+    if(editingFolder) await db.doc('folders/' + editingFolder.id).update({ name });
+    else { const ref = await db.collection('folders').add({ name, createdAt: Date.now() }); curFolder = ref.id; }
+    close('#folderBox'); render(); toast('저장했어요');
+  }catch(err){ toast('저장하지 못했어요 (' + (err.code||'오류') + ')'); }
+  $('#fSave').disabled = false;
+});
+$('#fDelete').onclick = () => {
+  const f = editingFolder; if(!f) return;
+  const n = entries.filter(e => fid(e) === f.id).length;
+  close('#folderBox');
+  askConfirm(`'${esc(f.name)}' 폴더를 삭제할까요?<br><small style="color:var(--muted)">${n ? `안의 기록 ${n}개는 지워지지 않고 '폴더 없음'으로 옮겨져요.` : '안의 기록은 지워지지 않아요.'}</small>`, async () => {
+    try{
+      const b = db.batch();
+      entries.filter(e => e.folderId === f.id).forEach(e => b.update(db.doc('entries/' + e.id), { folderId: '' }));
+      b.delete(db.doc('folders/' + f.id));
+      await b.commit();
+      if(curFolder === f.id) curFolder = 'all';
+      render(); toast('폴더를 삭제했어요');
+    }catch(err){ toast('삭제하지 못했어요 (' + (err.code||'오류') + ')'); }
+  });
+};
+
 /* ---------- init ---------- */
 $('#sLogout').onclick = async () => { try{ await firebase.auth().signOut(); }catch(_){} location.reload(); };
 
@@ -592,6 +719,11 @@ function startApp(){
     loaded = true; render();
     if(viewingId && $('#viewer').classList.contains('open') && !entries.find(x=>x.id===viewingId)) close('#viewer');
   }, err => { clearTimeout(timer); loaded = true; setStatus('기록을 불러오지 못했어요. 로그인 상태나 Firestore 규칙을 확인해 주세요. (' + (err.code||'오류') + ')'); render(); });
+  db.collection('folders').onSnapshot(snap => {
+    folders = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (a.createdAt||0) - (b.createdAt||0));
+    if(curFolder !== 'all' && curFolder !== 'none' && !folders.some(f => f.id === curFolder)) curFolder = 'all';
+    render();
+  }, () => {});
   db.doc('settings/main').onSnapshot(s => { settings = s.exists ? s.data() : {}; renderHeader(); }, () => {});
 }
 
@@ -605,15 +737,13 @@ render();
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   db = firebase.firestore();
-  const storage = firebase.storage();
-  const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
   assets = {
     async upload(blob){
-      const ref = storage.ref('media/' + uid());
-      await ref.put(blob, blob.type ? { contentType: blob.type } : undefined);
-      return { id: await ref.getDownloadURL() };
+      const buf = new Uint8Array(await blob.arrayBuffer());
+      const ref = await db.collection('media').add({ data: firebase.firestore.Blob.fromUint8Array(buf), type: blob.type || '', createdAt: Date.now() });
+      return { id: ref.id };
     },
-    async delete(id){ await storage.refFromURL(id).delete(); }
+    async delete(id){ await db.collection('media').doc(id).delete(); }
   };
 
   let started = false;
