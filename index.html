@@ -6,6 +6,7 @@
 <title>기록보관소</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 :root{
   --bg:#fbf6f1; --paper:#fffdfa; --ink:#3b2f33; --muted:#8a7a7e; --line:#efe3dc;
@@ -53,6 +54,76 @@ h1{font-family:"Gowun Batang",serif;font-size:26px;margin:6px 0 2px}
 
 .orig{display:flex;gap:8px;align-items:center;font-size:14px;margin-top:10px;color:var(--ink)}
 .orig input{width:18px;height:18px;accent-color:var(--rose)}
+
+/* record extras */
+.fav-btn{background:none;border:none;font-size:26px;line-height:1;padding:0 6px 0 0;color:#e2a400;vertical-align:-2px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.tag{font-size:12px;background:var(--rose-soft);color:var(--rose-deep);border-radius:999px;padding:1px 9px}
+.meta{font-size:13px;color:var(--muted);margin:2px 0}
+.cmts{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.cm-title{font-weight:700;font-size:15px;margin-bottom:8px}
+.cm{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin-bottom:8px;font-size:15px;white-space:pre-wrap}
+.cm b{color:var(--rose-deep);margin-right:6px}
+.cm small{color:var(--muted);margin-left:6px}
+.cm-x{border:none;background:none;color:var(--muted);float:right;padding:0 4px}
+.cmform{display:flex;gap:8px;flex-wrap:wrap}
+.cmform input{flex:1;min-width:110px;border:1px solid var(--line);border-radius:999px;padding:8px 14px;background:#fff;outline:none}
+.cmform input:focus{border-color:var(--rose)}
+.pin-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#pickMap,#bigmap{border-radius:12px;margin:10px 0;z-index:0}
+#pickMap{height:320px}
+.sr{list-style:none;margin:6px 0 0;padding:0;font-size:14px;max-height:130px;overflow-y:auto}
+.sr li{padding:6px 8px;border-radius:8px;cursor:pointer}
+.sr li:hover{background:var(--rose-soft)}
+.pin{background:none!important;border:none!important;font-size:26px;line-height:1}
+
+/* views */
+.tools{margin-top:-2px;flex-wrap:wrap;overflow:visible}
+.chip.tool{background:transparent}
+.chip.tool.on{background:var(--rose)}
+.pgrid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin:6px 0 10px;font-family:"Gowun Batang",serif;font-weight:700;font-size:18px}
+.cal-head button{border:1px solid var(--line);background:var(--paper);border-radius:999px;width:38px;height:38px;font-size:18px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal .wd{text-align:center;font-size:12px;color:var(--muted);padding:4px 0}
+.day{aspect-ratio:1/1.05;border:1px solid var(--line);background:var(--paper);border-radius:12px;padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;font-size:14px;min-width:0}
+.day.today{border-color:var(--rose)}
+.day.sel{background:var(--rose-soft)}
+.day.has b{color:var(--rose-deep)}
+.day .dot{font-size:11px;color:var(--rose-deep);margin-top:2px;white-space:nowrap}
+.cal-sel{margin:18px 0 8px;font-weight:700;font-family:"Gowun Batang",serif}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:10px}
+.stat{background:var(--paper);border-radius:16px;padding:14px 8px;box-shadow:var(--shadow);text-align:center}
+.stat b{display:block;font-size:20px;font-family:"Gowun Batang",serif;color:var(--rose)}
+.stat span{font-size:13px;color:var(--muted)}
+.st-h{font-family:"Gowun Batang",serif;font-weight:700;font-size:17px;margin:22px 0 8px}
+.st-row{display:flex;align-items:center;gap:10px;font-size:14px;margin:6px 0}
+.st-row .nm{flex:0 0 92px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-row .bar{flex:1;height:10px;background:var(--rose-soft);border-radius:6px;overflow:hidden}
+.st-row .bar i{display:block;height:100%;background:var(--rose);border-radius:6px}
+.st-row .vl{flex:0 0 auto;min-width:64px;text-align:right}
+
+/* wishes & letters */
+.wish{display:flex;align-items:center;gap:10px;background:var(--paper);border-radius:14px;padding:10px 12px;margin-bottom:8px;box-shadow:var(--shadow)}
+.wish .wtext{flex:1;min-width:0;overflow-wrap:anywhere}
+.wish.done .wtext{text-decoration:line-through;color:var(--muted)}
+.wchk{flex:0 0 26px;height:26px;border-radius:8px;border:2px solid var(--rose);background:#fff;color:var(--rose);font-size:16px;line-height:1;padding:0}
+.wish.done .wchk{background:var(--rose);color:#fff}
+.wbtn{padding:5px 12px;font-size:13px}
+.letter{background:var(--paper);border-radius:16px;box-shadow:var(--shadow);padding:14px 16px;margin-bottom:12px}
+.letter.locked{opacity:.85}
+.letter .lh{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted);margin-bottom:6px;align-items:center}
+.letter .lt{white-space:pre-wrap;font-family:"Gowun Batang",serif;line-height:1.85}
+.letter-form{background:var(--paper);border-radius:16px;box-shadow:var(--shadow);padding:16px;margin-bottom:16px}
+.letter-form textarea{min-height:110px}
+
+/* banners & milestones */
+.ms-btn{background:var(--rose-soft);color:var(--rose-deep);border:none;border-radius:999px;padding:6px 14px;font-size:14px;margin:6px 0 2px}
+.banner{display:block;width:100%;text-align:left;background:var(--paper);border:1px solid var(--rose-soft);border-left:4px solid var(--rose);border-radius:12px;padding:10px 14px;margin:8px 0;font-size:15px;box-shadow:var(--shadow)}
+.banner.plain{cursor:default}
+.ms-row{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px}
+.ms-row b{font-family:"Gowun Batang",serif}
+.ms-row span{color:var(--muted);font-size:13px;text-align:right}
 
 /* trash */
 .trash-note{background:var(--rose-soft);border-radius:14px;padding:12px 14px;font-size:14px;color:var(--rose-deep);margin-bottom:14px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
@@ -147,12 +218,14 @@ h1{font-family:"Gowun Batang",serif;font-size:26px;margin:6px 0 2px}
   <header>
     <div class="names" id="names"></div>
     <div class="dday" id="dday"></div>
+    <div><button type="button" class="ms-btn" id="msBtn" style="display:none"></button></div>
     <h1 id="mainTitle">기록보관소</h1>
     <div class="stats" id="stats"></div>
     <button class="set-link" id="openSettings">처음 만난 날 · 이름 설정</button>
   </header>
 
   <div class="status" id="status"></div>
+  <div id="banners"></div>
 
   <div class="toolbar">
     <input class="search" id="search" type="search" placeholder="제목, 장소, 내용으로 찾기">
@@ -160,6 +233,7 @@ h1{font-family:"Gowun Batang",serif;font-size:26px;margin:6px 0 2px}
   </div>
 
   <div class="folders" id="folders"></div>
+  <div class="folders tools" id="tools"></div>
 
   <main id="list"><div class="empty"><p>불러오는 중…</p></div></main>
 </div>
@@ -173,6 +247,11 @@ h1{font-family:"Gowun Batang",serif;font-size:26px;margin:6px 0 2px}
       <div class="field"><label for="edPlace">장소</label><input id="edPlace" placeholder="예) 성수동 카페, 한강공원"></div>
     </div>
     <div class="field"><label for="edFolder">폴더</label><select id="edFolder"></select></div>
+    <div class="row">
+      <div class="field"><label for="edTags">태그</label><input id="edTags" placeholder="예) 카페 맛집 기념일 (띄어쓰기로 구분)"></div>
+      <div class="field"><label for="edCost">데이트 비용 (원)</label><input id="edCost" type="number" inputmode="numeric" min="0" placeholder="예) 45000"></div>
+    </div>
+    <div class="field"><label>위치</label><div class="pin-row"><button type="button" class="btn ghost" id="edPin">📍 지도에서 위치 고르기</button><span id="pinInfo" class="drop-hint" style="margin:0"></span></div></div>
     <div class="field"><label for="edTitle">제목</label><input id="edTitle" placeholder="오늘을 한 줄로"></div>
     <div class="field"><label>오늘의 기분</label><div class="moods" id="moods"></div></div>
     <div class="field"><label for="edText">그날의 일기</label><textarea id="edText" placeholder="오늘 있었던 일, 나눈 이야기, 기억하고 싶은 순간들…"></textarea></div>
@@ -211,10 +290,41 @@ h1{font-family:"Gowun Batang",serif;font-size:26px;margin:6px 0 2px}
     <div class="field"><label for="sNames">두 사람 이름</label><input id="sNames" placeholder="예) 지훈 ♥ 서연"></div>
     <div class="field"><label for="sStart">처음 만난 날 (사귄 날)</label><input id="sStart" type="date"></div>
     <div class="field"><label for="sTitle">보관소 이름</label><input id="sTitle" placeholder="기록보관소"></div>
+    <div class="field"><label for="sWho">내 이름 <span style="color:var(--muted)">(이 기기에만 저장돼요)</span></label><input id="sWho" maxlength="10" placeholder="글쓴이·답글 이름으로 쓰여요"></div>
+    <div class="field"><label>백업 (내 기기에 파일로 저장)</label>
+      <div class="pin-row"><button type="button" class="btn ghost" id="bkJson">글만 (.json)</button><button type="button" class="btn ghost" id="bkZip">사진·영상까지 (.zip)</button></div>
+      <div class="drop-hint">zip에는 글과 사진·영상 원본이 모두 들어가요. 사진이 많으면 시간이 오래 걸리고 폰에서는 메모리가 모자랄 수 있어서, 큰 백업은 PC에서 받는 걸 추천해요. 휴지통에 있는 기록은 빠져요.</div>
+    </div>
     <div class="actions">
       <button class="btn ghost" id="sCancel">취소</button>
       <button class="btn" id="sSave">저장</button>
     </div>
+  </div>
+</div>
+
+<!-- map picker -->
+<div class="overlay" id="mapBox" style="align-items:center">
+  <div class="sheet" style="max-width:560px">
+    <h2>위치 고르기</h2>
+    <form id="mapSearchForm" class="cmform"><input id="mapQ" placeholder="장소나 주소 검색 (예: 성수동 카페거리)"><button class="btn" type="submit">검색</button></form>
+    <ul class="sr" id="mapResults"></ul>
+    <div id="pickMap"></div>
+    <div class="drop-hint">지도를 누르면 그 자리에 핀이 꽂혀요. 가게 이름 검색은 잘 안 나올 수 있어서, 근처를 찾은 뒤 직접 눌러도 돼요.</div>
+    <div class="actions">
+      <button type="button" class="btn danger" id="mapClear">위치 지우기</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost" id="mapCancel">취소</button>
+      <button type="button" class="btn" id="mapOk">이 위치로 정하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- milestones -->
+<div class="overlay" id="msBox" style="align-items:center">
+  <div class="sheet" style="max-width:400px">
+    <h2>🎉 다가오는 기념일</h2>
+    <div id="msList"></div>
+    <div class="actions"><button type="button" class="btn" id="msClose">닫기</button></div>
   </div>
 </div>
 
@@ -258,6 +368,7 @@ h1{font-family:"Gowun Batang",serif;font-size:26px;margin:6px 0 2px}
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 /* ★ 여기에 Firebase 콘솔의 firebaseConfig 값을 붙여넣으세요 ★ */
 const firebaseConfig = {
@@ -273,7 +384,8 @@ const $ = s => document.querySelector(s);
 const MOODS = ['🥰','😊','😂','🥹','😍','😌','😴','😤','😢','🍽️','☕','🎬','🌸','🌙'];
 let db = null, assets = null, entries = [], settings = {}, loaded = false, editable = true;
 let viewingId = null;
-let folders = [], curFolder = 'all'; // 'all' | 'none' | 폴더 id
+let folders = [], curFolder = 'all'; // 'all' | 'none' | 'trash' | 폴더 id | 보기 이름(fav, photos, calendar, map, wish, letters, stats)
+let wishes = [], letters = [];
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 /* 사진·영상은 Firestore 'media' 컬렉션에 1MB 미만 조각으로 저장해요 (Storage 없이 무료로 사용) */
@@ -298,6 +410,13 @@ function hydrate(root){
   });
 }
 const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); };
+const getWho = () => { try{ return localStorage.getItem('who') || ''; }catch(_){ return ''; } };
+const setWho = v => { try{ localStorage.setItem('who', v); }catch(_){} };
+const dayParse = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const dayDiff = (a, b) => Math.round((dayParse(a) - dayParse(b)) / 86400000);
+const addDays = (s, n) => { const dt = dayParse(s); dt.setDate(dt.getDate() + n); return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0'); };
+const fmtWon = n => Number(n).toLocaleString() + '원';
+const fmtTime = ts => { const d = new Date(ts); return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
 const WD = ['일','월','화','수','목','금','토'];
 function fmtDate(s){
   if(!s) return '';
@@ -321,6 +440,9 @@ function renderHeader(){
     const n = Math.round((now - start) / 86400000) + 1;
     $('#dday').innerHTML = (n >= 1 ? `D+${n.toLocaleString()}` : `D-${(1-n).toLocaleString()}`) + `<small>${fmtDate(settings.startDate)}부터</small>`;
   } else $('#dday').innerHTML = '';
+  const nm = settings.startDate ? milestones(settings.startDate, 1)[0] : null, mb = $('#msBtn');
+  if(nm){ const dd = dayDiff(nm.date, todayStr()); mb.style.display = ''; mb.textContent = `🎉 다음 기념일 · ${nm.label} · ${dd === 0 ? '오늘!' : 'D-' + dd}`; }
+  else mb.style.display = 'none';
   const photos = live().reduce((a,e)=>a + (e.media||[]).filter(m=>m.type==='image').length, 0);
   const videos = live().reduce((a,e)=>a + (e.media||[]).filter(m=>m.type==='video').length, 0);
   $('#stats').textContent = loaded ? `추억 ${live().length}개 · 사진 ${photos}장 · 영상 ${videos}개` : '';
@@ -413,7 +535,7 @@ function renderTrash(list){
 const fid = e => folders.some(f => f.id === e.folderId) ? e.folderId : '';
 function renderFolders(){
   const box = $('#folders');
-  if(!loaded){ box.innerHTML = ''; return; }
+  if(!loaded){ box.innerHTML = ''; $('#tools').innerHTML = ''; return; }
   const cnt = id => live().filter(e => fid(e) === id).length;
   let h = `<button class="chip ${curFolder==='all'?'on':''}" data-f="all">전체 <i>${live().length}</i></button>`;
   for(const f of folders){
@@ -430,15 +552,246 @@ function renderFolders(){
     curFolder = c.dataset.f; render();
   });
   const add = $('#addFolder'); if(add) add.onclick = () => openFolderBox(null);
+  const T = [['fav','⭐ 즐겨찾기', live().filter(e => e.fav).length], ['photos','🖼 사진·영상', 0], ['calendar','📅 달력', 0], ['map','🗺 지도', live().filter(e => e.lat != null).length],
+             ['wish','📝 하고 싶은 것', wishes.filter(w => !w.done).length], ['letters','💌 편지', letters.filter(l => l.openAt <= todayStr() && !l.read).length], ['stats','📊 통계', 0]];
+  $('#tools').innerHTML = T.map(([k,l,n]) => `<button class="chip tool ${curFolder===k?'on':''}" data-v="${k}">${l}${n ? ` <i>${n}</i>` : ''}</button>`).join('');
+  $('#tools').querySelectorAll('.chip').forEach(c => c.onclick = () => { curFolder = c.dataset.v; render(); });
 }
+function cardHtml(e){
+  const media = e.media || [], cover = media.find(x => x.type==='image') || media[0];
+  return `<button class="card" data-id="${esc(e.id)}">
+    <div class="cover">${cover ? mediaTag(cover) : esc(e.mood || '💗')}${media.length>1?`<span class="count">+${media.length-1}</span>`:''}</div>
+    <div class="card-body">
+      <div class="card-date">${esc(fmtDate(e.date))}${e.author ? ' · ' + esc(e.author) : ''}${(e.comments||[]).length ? ` · 💬${e.comments.length}` : ''}</div>
+      <div class="card-title">${e.fav?'<span>★</span>':''}${e.mood?`<span>${esc(e.mood)}</span>`:''}<span>${esc(e.title || '제목 없는 하루')}</span></div>
+      ${e.place?`<div class="card-place">📍 ${esc(e.place)}</div>`:''}
+      ${(e.tags||[]).length ? `<div class="tags">${e.tags.map(t => `<span class="tag">#${esc(t)}</span>`).join('')}</div>` : ''}
+      ${e.cost != null ? `<div class="meta">💸 ${esc(fmtWon(e.cost))}</div>` : ''}
+      <div class="card-text">${esc(e.text || '')}</div>
+    </div></button>`;
+}
+function listHtml(shown, months = true){
+  let html = '', lastMonth = '';
+  for(const e of shown){
+    const [y,m] = (e.date||'').split('-');
+    const mk = y + '-' + m;
+    if(months && mk !== lastMonth){ html += `<div class="month">${Number(y)}년 ${Number(m)}월</div>`; lastMonth = mk; }
+    html += cardHtml(e);
+  }
+  return html;
+}
+function bindCards(list){
+  hydrate(list);
+  list.querySelectorAll('.card[data-id]').forEach(c => { if(!c.classList.contains('trash-card')) c.onclick = () => openViewer(c.dataset.id); });
+}
+/* 사귄 날을 1일로 세요: 100일, 200일… 그리고 1주년, 2주년… */
+function milestones(start, count){
+  const today = todayStr(), out = [];
+  let k = 0;
+  for(let n = 100; n <= 36500 && k < count; n += 100){ const d = addDays(start, n - 1); if(d >= today){ out.push({ label: n + '일', date: d }); k++; } }
+  const [sy, sm, sd] = start.split('-');
+  k = 0;
+  for(let y = 1; y <= 80 && k < count; y++){ const d = `${Number(sy) + y}-${sm}-${sd}`; if(d >= today){ out.push({ label: y + '주년', date: d }); k++; } }
+  return out.sort((a, b) => a.date.localeCompare(b.date) || a.label.localeCompare(b.label)).slice(0, count);
+}
+function renderBanners(){
+  const box = $('#banners');
+  if(!loaded || curFolder !== 'all' || $('#search').value.trim()){ box.innerHTML = ''; return; }
+  const t = todayStr(), md = t.slice(5), yr = Number(t.slice(0, 4));
+  const past = live().filter(e => e.date && e.date.slice(5) === md && Number(e.date.slice(0, 4)) < yr);
+  const ready = letters.filter(l => l.openAt <= t && !l.read);
+  const nm = settings.startDate ? milestones(settings.startDate, 1)[0] : null;
+  let h = '';
+  if(nm && nm.date === t) h += `<div class="banner plain">🎉 오늘은 우리의 ${esc(nm.label)}이에요!</div>`;
+  if(ready.length) h += `<button type="button" class="banner" data-go="letters">💌 열어볼 수 있는 편지가 ${ready.length}통 있어요</button>`;
+  for(const e of past) h += `<button type="button" class="banner" data-e="${esc(e.id)}">📅 ${yr - Number(e.date.slice(0, 4))}년 전 오늘 · ${esc(e.title || '제목 없는 하루')}</button>`;
+  box.innerHTML = h;
+  box.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { curFolder = b.dataset.go; render(); });
+  box.querySelectorAll('[data-e]').forEach(b => b.onclick = () => openViewer(b.dataset.e));
+}
+
+function renderFav(list){
+  const shown = live().filter(e => e.fav);
+  if(!shown.length){ list.innerHTML = '<div class="empty"><div class="big">⭐</div><p>기록을 열어 ☆를 누르면<br>특별한 날이 여기에 모여요.</p></div>'; return; }
+  list.innerHTML = listHtml(shown); bindCards(list);
+}
+
+function renderPhotos(list){
+  const items = [];
+  for(const e of live()) (e.media||[]).forEach((m,i) => items.push({ ...m, _d: e.date, _n: i + 1, _t: e.title }));
+  if(!items.length){ list.innerHTML = '<div class="empty"><div class="big">🖼️</div><p>아직 올린 사진이나 영상이 없어요.</p></div>'; return; }
+  let html = '', last = '';
+  items.forEach((m, k) => {
+    const [y, mo] = (m._d || '').split('-'), mk = y + '-' + mo;
+    if(mk !== last){ if(last) html += '</div>'; html += `<div class="month">${Number(y)}년 ${Number(mo)}월</div><div class="v-gallery pgrid">`; last = mk; }
+    html += `<div class="thumb" data-k="${k}" title="${esc(m._t || '')}">${mediaTag(m)}${m.type==='video'?'<span class="badge">▶ 영상</span>':''}</div>`;
+  });
+  list.innerHTML = `<div class="stats" style="text-align:center">사진·영상 ${items.length}개</div>` + html + '</div>';
+  hydrate(list);
+  list.querySelectorAll('.thumb').forEach(t => t.onclick = () => openLightbox(items, Number(t.dataset.k)));
+}
+
+const calState = { y: new Date().getFullYear(), m: new Date().getMonth(), sel: '' };
+function renderCalendar(list){
+  const { y, m } = calState; if(!calState.sel) calState.sel = todayStr();
+  const pad = n => String(n).padStart(2, '0');
+  const first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
+  const by = {}; for(const e of live()) (by[e.date] = by[e.date] || []).push(e);
+  let cells = WD.map(w => `<div class="wd">${w}</div>`).join('');
+  for(let i = 0; i < first; i++) cells += '<div></div>';
+  for(let d = 1; d <= days; d++){
+    const ds = `${y}-${pad(m+1)}-${pad(d)}`, es = by[ds] || [];
+    cells += `<button type="button" class="day ${es.length?'has':''} ${ds===todayStr()?'today':''} ${ds===calState.sel?'sel':''}" data-d="${ds}"><b>${d}</b>${es.length ? `<span class="dot">${esc(es[0].mood || '💗')}${es.length > 1 ? '×' + es.length : ''}</span>` : ''}</button>`;
+  }
+  const selEs = by[calState.sel] || [];
+  list.innerHTML = `<div class="cal-head"><button type="button" id="calPrev">‹</button><span>${y}년 ${m+1}월</span><button type="button" id="calNext">›</button></div>
+    <div class="cal">${cells}</div>
+    <div class="cal-sel">${esc(fmtDate(calState.sel))}</div>
+    ${selEs.length ? listHtml(selEs, false) : '<div class="drop-hint">이 날의 기록이 없어요.</div>'}
+    ${editable ? '<div style="margin-top:12px"><button class="btn" id="calNew">이 날 기록 쓰기</button></div>' : ''}`;
+  $('#calPrev').onclick = () => { if(--calState.m < 0){ calState.m = 11; calState.y--; } render(); };
+  $('#calNext').onclick = () => { if(++calState.m > 11){ calState.m = 0; calState.y++; } render(); };
+  list.querySelectorAll('.day').forEach(b => b.onclick = () => { calState.sel = b.dataset.d; render(); });
+  const nb = $('#calNew'); if(nb) nb.onclick = () => openEditor(null, { date: calState.sel });
+  bindCards(list);
+}
+
+let bigMap = null;
+function renderMap(list){
+  if(!window.L){ list.innerHTML = '<div class="empty"><p>지도를 불러오지 못했어요. 인터넷 연결을 확인해 주세요.</p></div>'; return; }
+  const pts = live().filter(e => e.lat != null && e.lng != null);
+  if(!pts.length){ list.innerHTML = '<div class="empty"><div class="big">🗺️</div><p>위치를 지정한 기록이 없어요.<br>기록을 쓸 때 "지도에서 위치 고르기"를 눌러보세요.</p></div>'; return; }
+  list.innerHTML = `<div class="stats" style="text-align:center">📍 ${pts.length}곳 · 핀을 누르면 기록이 열려요</div><div id="bigmap" style="height:62vh"></div>`;
+  if(bigMap){ bigMap.remove(); bigMap = null; }
+  bigMap = L.map('bigmap');
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(bigMap);
+  const bounds = [];
+  for(const e of pts){
+    const mk = L.marker([e.lat, e.lng], { icon: L.divIcon({ className: 'pin', html: esc(e.mood || '📍'), iconSize: [28, 28], iconAnchor: [14, 26] }) }).addTo(bigMap);
+    mk.bindTooltip(esc(e.title || '제목 없는 하루') + ' · ' + esc(e.date));
+    mk.on('click', () => openViewer(e.id));
+    bounds.push([e.lat, e.lng]);
+  }
+  if(bounds.length === 1) bigMap.setView(bounds[0], 15); else bigMap.fitBounds(bounds, { padding: [30, 30] });
+}
+
+function topN(arr, n){
+  const m = new Map(); for(const x of arr) if(x) m.set(x, (m.get(x) || 0) + 1);
+  return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, n);
+}
+function barRows(rows, fmt){
+  const max = Math.max(...rows.map(r => r[1]), 1);
+  return rows.map(([nm, v, extra]) => `<div class="st-row"><span class="nm" title="${esc(nm)}">${esc(nm)}</span><span class="bar"><i style="width:${Math.max(4, Math.round(v / max * 100))}%"></i></span><span class="vl">${esc(fmt(v, extra))}</span></div>`).join('');
+}
+function renderStats(list){
+  const all = live();
+  if(!all.length){ list.innerHTML = '<div class="empty"><div class="big">📊</div><p>기록이 쌓이면 통계가 나와요.</p></div>'; return; }
+  const photos = all.reduce((a,e) => a + (e.media||[]).filter(m => m.type==='image').length, 0);
+  const videos = all.reduce((a,e) => a + (e.media||[]).filter(m => m.type==='video').length, 0);
+  const costs = all.filter(e => e.cost != null);
+  const total = costs.reduce((a,e) => a + e.cost, 0);
+  const byMonth = {};
+  for(const e of costs){ const k = (e.date || '').slice(0, 7); (byMonth[k] = byMonth[k] || { sum: 0, n: 0 }); byMonth[k].sum += e.cost; byMonth[k].n++; }
+  const monthRows = Object.entries(byMonth).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 12).map(([k, v]) => [k.replace('-', '.'), v.sum, v.n]);
+  const places = topN(all.map(e => (e.place || '').trim()), 5), moods = topN(all.map(e => e.mood), 5), tags = topN(all.flatMap(e => e.tags || []), 8);
+  list.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat"><b>${all.length}</b><span>추억</span></div>
+      <div class="stat"><b>${photos}</b><span>사진</span></div>
+      <div class="stat"><b>${videos}</b><span>영상</span></div>
+      <div class="stat"><b>${all.filter(e => e.fav).length}</b><span>즐겨찾기</span></div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat"><b>${esc(fmtWon(total))}</b><span>데이트 비용 합계</span></div>
+      <div class="stat"><b>${costs.length ? esc(fmtWon(Math.round(total / costs.length))) : '-'}</b><span>한 번 평균 (${costs.length}회)</span></div>
+    </div>
+    ${monthRows.length ? `<div class="st-h">💸 월별 데이트 비용</div>${barRows(monthRows, (v, n) => fmtWon(v) + ' · ' + n + '회')}` : '<div class="drop-hint" style="margin-top:14px">기록에 비용을 적으면 월별 합계가 나와요.</div>'}
+    ${places.length ? `<div class="st-h">📍 자주 간 곳</div>${barRows(places, v => v + '번')}` : ''}
+    ${moods.length ? `<div class="st-h">😊 자주 고른 기분</div>${barRows(moods, v => v + '번')}` : ''}
+    ${tags.length ? `<div class="st-h"># 자주 쓴 태그</div>${barRows(tags.map(([t, n]) => ['#' + t, n]), v => v + '번')}` : ''}`;
+}
+function renderWish(list){
+  const todo = wishes.filter(w => !w.done).sort((a,b) => (a.createdAt||0) - (b.createdAt||0));
+  const done = wishes.filter(w => w.done).sort((a,b) => (b.doneAt||0) - (a.doneAt||0));
+  const row = w => `<div class="wish ${w.done ? 'done' : ''}" data-id="${esc(w.id)}">
+      <button type="button" class="wchk" data-act="toggle" aria-label="완료 표시">${w.done ? '✔' : ''}</button>
+      <span class="wtext">${esc(w.text)}</span>
+      ${w.done && editable ? '<button type="button" class="btn ghost wbtn" data-act="record">기록 쓰기</button>' : ''}
+      ${editable ? '<button type="button" class="cm-x" data-act="del" title="삭제">✕</button>' : ''}</div>`;
+  list.innerHTML = `${editable ? '<form class="cmform" id="wishForm" style="margin-bottom:14px"><input id="wishText" maxlength="80" placeholder="가고 싶은 곳, 하고 싶은 것을 적어요"><button class="btn" type="submit">추가</button></form>' : ''}
+    ${todo.length ? todo.map(row).join('') : '<div class="drop-hint">아직 적어둔 게 없어요. 같이 하고 싶은 걸 적어보세요 ✨</div>'}
+    ${done.length ? `<div class="st-h">✔ 해냈어요 (${done.length})</div>${done.map(row).join('')}` : ''}`;
+  const f = $('#wishForm');
+  if(f) f.onsubmit = async e => {
+    e.preventDefault();
+    const t = $('#wishText').value.trim(); if(!t) return;
+    try{ await db.collection('wishes').add({ text: t, done: false, createdAt: Date.now(), author: getWho() }); }
+    catch(err){ toast('추가하지 못했어요 (' + (err.code||'오류') + ')'); }
+  };
+  list.querySelectorAll('.wish').forEach(r => {
+    const w = wishes.find(x => x.id === r.dataset.id); if(!w) return;
+    r.querySelectorAll('[data-act]').forEach(b => b.onclick = async () => {
+      try{
+        if(b.dataset.act === 'toggle') await db.doc('wishes/' + w.id).update({ done: !w.done, doneAt: w.done ? 0 : Date.now() });
+        else if(b.dataset.act === 'record') openEditor(null, { title: w.text });
+        else askConfirm(`'${esc(w.text)}'을(를) 목록에서 지울까요?`, async () => {
+          try{ await db.doc('wishes/' + w.id).delete(); }catch(err){ toast('삭제하지 못했어요 (' + (err.code||'오류') + ')'); }
+        }, '지울게요');
+      }catch(err){ toast('바꾸지 못했어요 (' + (err.code||'오류') + ')'); }
+    });
+  });
+}
+
+function renderLetters(list){
+  const today = todayStr(), tomorrow = addDays(today, 1);
+  const sorted = [...letters].sort((a,b) => (a.openAt||'').localeCompare(b.openAt||''));
+  const card = l => {
+    const locked = l.openAt > today;
+    const del = editable ? `<button type="button" class="cm-x" data-act="del" title="삭제">✕</button>` : '';
+    if(locked) return `<div class="letter locked" data-id="${esc(l.id)}"><div class="lh"><span>🔒 ${esc(fmtDate(l.openAt))}에 열려요 · D-${dayDiff(l.openAt, today)}</span><span>${esc(l.author || '')}${del}</span></div><div class="lt">아직 열 수 없어요. 그날까지 조금만 기다려 주세요 💌</div></div>`;
+    if(!l.read) return `<div class="letter" data-id="${esc(l.id)}"><div class="lh"><span>💌 ${esc(fmtDate(l.openAt))} · 이제 열어볼 수 있어요!</span><span>${esc(l.author || '')}${del}</span></div>${editable ? '<button type="button" class="btn" data-act="open">편지 열어보기</button>' : ''}</div>`;
+    return `<div class="letter" data-id="${esc(l.id)}"><div class="lh"><span>💌 ${esc(fmtDate(l.openAt))}에 열린 편지</span><span>${esc(l.author || '')}${del}</span></div><div class="lt">${esc(l.text)}</div></div>`;
+  };
+  list.innerHTML = `${editable ? `<form class="letter-form" id="letterForm">
+      <div class="field"><label for="ltText">미래의 우리에게</label><textarea id="ltText" maxlength="3000" placeholder="1년 뒤, 우리에게 하고 싶은 말을 적어요"></textarea></div>
+      <div class="row"><div class="field"><label for="ltDate">열리는 날</label><input id="ltDate" type="date" min="${tomorrow}"></div><div class="field"><label for="ltWho">쓴 사람</label><input id="ltWho" maxlength="10" value="${esc(getWho())}"></div></div>
+      <button class="btn" type="submit">편지 보관하기</button>
+      <div class="drop-hint">정해진 날이 되기 전에는 화면에서 내용이 가려져요. 다만 데이터가 암호화되는 건 아니니, 아주 비밀스러운 내용은 적지 마세요.</div>
+    </form>` : ''}
+    ${sorted.length ? sorted.map(card).join('') : '<div class="drop-hint">보관 중인 편지가 없어요.</div>'}`;
+  const f = $('#letterForm');
+  if(f) f.onsubmit = async e => {
+    e.preventDefault();
+    const text = $('#ltText').value.trim(), openAt = $('#ltDate').value;
+    if(!text){ toast('편지 내용을 적어주세요'); return; }
+    if(!openAt || openAt <= today){ toast('열리는 날은 내일 이후로 정해주세요'); return; }
+    const who = $('#ltWho').value.trim(); if(who) setWho(who);
+    try{ await db.collection('letters').add({ text, openAt, author: who, createdAt: Date.now(), read: false }); toast('편지를 보관했어요 💌'); }
+    catch(err){ toast('보관하지 못했어요 (' + (err.code||'오류') + ')'); }
+  };
+  list.querySelectorAll('.letter').forEach(r => {
+    const l = letters.find(x => x.id === r.dataset.id); if(!l) return;
+    r.querySelectorAll('[data-act]').forEach(b => b.onclick = async () => {
+      if(b.dataset.act === 'open'){
+        try{ await db.doc('letters/' + l.id).update({ read: true }); }catch(err){ toast('열지 못했어요 (' + (err.code||'오류') + ')'); }
+      } else askConfirm('이 편지를 삭제할까요?', async () => {
+        try{ await db.doc('letters/' + l.id).delete(); }catch(err){ toast('삭제하지 못했어요 (' + (err.code||'오류') + ')'); }
+      });
+    });
+  });
+}
+const VIEW = { fav: renderFav, photos: renderPhotos, calendar: renderCalendar, map: renderMap, stats: renderStats, wish: renderWish, letters: renderLetters };
+
 function render(){
-  renderHeader(); renderFolders();
+  renderHeader(); renderFolders(); renderBanners();
   const list = $('#list');
+  if(curFolder !== 'map' && bigMap){ bigMap.remove(); bigMap = null; }
   if(!loaded){ list.innerHTML = '<div class="empty"><p>불러오는 중…</p></div>'; return; }
   if(curFolder === 'trash'){ renderTrash(list); return; }
-  const q = $('#search').value.trim().toLowerCase();
+  if(VIEW[curFolder]){ VIEW[curFolder](list); return; }
+  const q = $('#search').value.trim().toLowerCase().replace(/^#/, '');
   const shown = live().filter(e => (curFolder === 'all' || (curFolder === 'none' ? fid(e) === '' : fid(e) === curFolder))
-    && (!q || [e.title,e.place,e.text].some(v => (v||'').toLowerCase().includes(q))));
+    && (!q || [e.title, e.place, e.text, (e.tags || []).join(' ')].some(v => (v||'').toLowerCase().includes(q))));
   if(!live().length){
     list.innerHTML = `<div class="empty"><div class="big">💌</div><p>아직 기록이 없어요.<br>첫 추억부터 남겨볼까요?</p>${editable?'<button class="btn" id="emptyNew">첫 기록 쓰기</button>':''}</div>`;
     const b = $('#emptyNew'); if(b) b.onclick = () => openEditor(null);
@@ -449,44 +802,66 @@ function render(){
     const b2 = $('#emptyNew2'); if(b2) b2.onclick = () => openEditor(null);
     return;
   }
-  let html = '', lastMonth = '';
-  for(const e of shown){
-    const [y,m] = (e.date||'').split('-');
-    const mk = y + '-' + m;
-    if(mk !== lastMonth){ html += `<div class="month">${Number(y)}년 ${Number(m)}월</div>`; lastMonth = mk; }
-    const media = e.media || [];
-    const cover = media.find(x=>x.type==='image') || media[0];
-    html += `<button class="card" data-id="${esc(e.id)}">
-      <div class="cover">${cover ? mediaTag(cover) : esc(e.mood || '💗')}${media.length>1?`<span class="count">+${media.length-1}</span>`:''}</div>
-      <div class="card-body">
-        <div class="card-date">${esc(fmtDate(e.date))}</div>
-        <div class="card-title">${e.mood?`<span>${esc(e.mood)}</span>`:''}<span>${esc(e.title || '제목 없는 하루')}</span></div>
-        ${e.place?`<div class="card-place">📍 ${esc(e.place)}</div>`:''}
-        <div class="card-text">${esc(e.text || '')}</div>
-      </div></button>`;
-  }
-  list.innerHTML = html; hydrate(list);
-  list.querySelectorAll('.card').forEach(c => c.onclick = () => openViewer(c.dataset.id));
+  list.innerHTML = listHtml(shown); bindCards(list);
 }
-$('#search').addEventListener('input', render);
+$('#search').addEventListener('input', () => {
+  if($('#search').value.trim() && curFolder !== 'all' && curFolder !== 'none' && !folders.some(f => f.id === curFolder)) curFolder = 'all';
+  render();
+});
 
 /* ---------- viewer ---------- */
+function osmLink(e){ return `https://www.openstreetmap.org/?mlat=${e.lat}&mlon=${e.lng}#map=17/${e.lat}/${e.lng}`; }
 function openViewer(id){
   const e = entries.find(x=>x.id===id); if(!e) return;
-  viewingId = id; lbBase = e.date;
-  const media = e.media || [];
+  viewingId = id; drawViewer(e); open('#viewer');
+}
+function drawViewer(e){
+  lbBase = e.date;
+  const media = e.media || [], cms = e.comments || [], who = getWho();
+  const keepText = $('#cmText') ? $('#cmText').value : '', keepWho = $('#cmWho') ? $('#cmWho').value : '';
+  const hasPin = e.lat != null && e.lng != null;
   $('#vBody').innerHTML = `
-    <div class="v-date">${esc(fmtDate(e.date))}</div>
-    <div class="v-title">${e.mood?esc(e.mood)+' ':''}${esc(e.title || '제목 없는 하루')}</div>
-    ${e.place?`<div class="v-place">📍 ${esc(e.place)}</div>`:''}
+    <div class="v-date">${esc(fmtDate(e.date))}${e.author ? ' · ' + esc(e.author) : ''}</div>
+    <div class="v-title">${editable ? `<button type="button" class="fav-btn" id="vFav" title="즐겨찾기">${e.fav ? '★' : '☆'}</button>` : (e.fav ? '★ ' : '')}${e.mood?esc(e.mood)+' ':''}${esc(e.title || '제목 없는 하루')}</div>
+    ${(e.place || hasPin) ? `<div class="v-place">📍 ${esc(e.place || '지도에 표시한 곳')}${hasPin ? ` · <a href="${osmLink(e)}" target="_blank" rel="noopener" style="color:inherit">지도 보기</a>` : ''}</div>` : ''}
+    ${(e.tags||[]).length ? `<div class="tags">${e.tags.map(t => `<span class="tag">#${esc(t)}</span>`).join('')}</div>` : ''}
+    ${e.cost != null ? `<div class="meta">💸 ${esc(fmtWon(e.cost))}</div>` : ''}
     ${media.length?`<div class="v-gallery">${media.map((m,i)=>`<div class="thumb" data-i="${i}">${mediaTag(m)}${m.type==='video'?'<span class="badge">▶ 영상</span>':''}</div>`).join('')}</div>`:''}
-    ${e.text?`<div class="v-text">${esc(e.text)}</div>`:''}`;
-  $('#vBody').querySelectorAll('.thumb').forEach(t => t.onclick = () => openLightbox(media, Number(t.dataset.i)));
-  hydrate($('#vBody'));
+    ${e.text?`<div class="v-text">${esc(e.text)}</div>`:''}
+    <div class="cmts">
+      <div class="cm-title">💬 답글 ${cms.length ? cms.length : ''}</div>
+      ${cms.map(c => `<div class="cm">${editable ? `<button type="button" class="cm-x" data-cid="${esc(c.id)}" title="삭제">✕</button>` : ''}<b>${esc(c.who || '')}</b>${esc(c.text)}<small>${esc(fmtTime(c.at))}</small></div>`).join('')}
+      ${editable ? `<form class="cmform" id="cmForm">${who ? '' : '<input id="cmWho" maxlength="10" placeholder="내 이름" style="flex:0 0 100px">'}<input id="cmText" maxlength="500" placeholder="답글 달기"><button class="btn" type="submit">등록</button></form>` : ''}
+    </div>`;
+  const vb = $('#vBody');
+  vb.querySelectorAll('.thumb').forEach(t => t.onclick = () => openLightbox(media, Number(t.dataset.i)));
+  hydrate(vb);
+  if($('#cmText') && keepText) $('#cmText').value = keepText;
+  if($('#cmWho') && keepWho) $('#cmWho').value = keepWho;
+  const fav = $('#vFav');
+  if(fav) fav.onclick = async () => { try{ await db.doc('entries/' + e.id).update({ fav: !e.fav }); }catch(err){ toast('바꾸지 못했어요 (' + (err.code||'오류') + ')'); } };
+  const form = $('#cmForm');
+  if(form) form.onsubmit = async ev => {
+    ev.preventDefault();
+    const text = $('#cmText').value.trim(); if(!text) return;
+    let w = getWho();
+    if(!w){ w = ($('#cmWho') ? $('#cmWho').value : '').trim(); if(!w){ toast('이름을 먼저 적어주세요'); return; } setWho(w); }
+    const c = { id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), who: w, text, at: Date.now() };
+    try{
+      const cur = entries.find(x => x.id === e.id) || e;
+      await db.doc('entries/' + e.id).update({ comments: [...(cur.comments || []), c] });
+      if($('#cmText')) $('#cmText').value = '';
+    }catch(err){ toast('등록하지 못했어요 (' + (err.code||'오류') + ')'); }
+  };
+  vb.querySelectorAll('.cm-x').forEach(b => b.onclick = () => askConfirm('이 답글을 삭제할까요?', async () => {
+    try{
+      const cur = entries.find(x => x.id === e.id) || e;
+      await db.doc('entries/' + e.id).update({ comments: (cur.comments || []).filter(c => c.id !== b.dataset.cid) });
+    }catch(err){ toast('삭제하지 못했어요 (' + (err.code||'오류') + ')'); }
+  }));
   $('#vEdit').style.display = editable ? '' : 'none';
   $('#vDelete').style.display = editable ? '' : 'none';
   $('#vSave').style.display = media.length ? '' : 'none';
-  open('#viewer');
 }
 $('#vClose').onclick = () => close('#viewer');
 $('#vEdit').onclick = () => { const e = entries.find(x=>x.id===viewingId); close('#viewer'); if(e) openEditor(e); };
@@ -526,7 +901,7 @@ $('#lbSave').onclick = async e => {
   e.stopPropagation();
   const m = lbItems[lbIdx]; if(!m) return;
   toast('저장 준비 중…');
-  try{ await deliver([await fileOf(m, `${lbBase}_${lbIdx + 1}`)]); }catch(_){ toast('저장하지 못했어요'); }
+  try{ await deliver([await fileOf(m, m._d ? `${m._d}_${m._n}` : `${lbBase}_${lbIdx + 1}`)]); }catch(_){ toast('저장하지 못했어요'); }
 };
 $('#vSave').onclick = async () => {
   const e = entries.find(x => x.id === viewingId); if(!e || !(e.media||[]).length) return;
@@ -577,17 +952,19 @@ document.addEventListener('keydown', e => {
 
 /* ---------- editor ---------- */
 let ed = null; // {id, original, media:[], newly:[], mood}
-function openEditor(entry){
+function openEditor(entry, preset){
   if(!db){ toast('지금은 저장할 수 없는 화면이에요'); return; }
-  ed = { id: entry?.id || null, original: entry, media: (entry?.media||[]).map(m=>({...m})), newly: [], mood: entry?.mood || '' };
+  ed = { id: entry?.id || null, original: entry, media: (entry?.media||[]).map(m=>({...m})), newly: [], mood: entry?.mood || '', lat: entry?.lat ?? null, lng: entry?.lng ?? null };
   $('#edHeading').textContent = entry ? '기록 수정' : '새 기록';
-  $('#edDate').value = entry?.date || todayStr();
+  $('#edDate').value = entry?.date || preset?.date || todayStr();
   $('#edPlace').value = entry?.place || '';
-  $('#edTitle').value = entry?.title || '';
+  $('#edTitle').value = entry?.title || preset?.title || '';
   $('#edText').value = entry?.text || '';
+  $('#edTags').value = (entry?.tags || []).join(' ');
+  $('#edCost').value = entry?.cost ?? '';
   $('#edFolder').innerHTML = '<option value="">폴더 없음</option>' + folders.map(f => `<option value="${esc(f.id)}">${esc(f.name)}</option>`).join('');
   $('#edFolder').value = entry ? fid(entry) : (folders.some(f => f.id === curFolder) ? curFolder : '');
-  renderMoods(); renderEdMedia();
+  renderMoods(); renderEdMedia(); updatePinInfo();
   open('#editor');
   setTimeout(()=>$('#edTitle').focus(), 50);
 }
@@ -726,15 +1103,19 @@ $('#edSave').onclick = async () => {
     text: $('#edText').value,
     mood: ed.mood,
     folderId: $('#edFolder').value,
+    tags: [...new Set($('#edTags').value.split(/[\s,#]+/).map(t => t.trim()).filter(Boolean))],
+    cost: $('#edCost').value === '' ? null : Math.max(0, Math.round(Number($('#edCost').value))),
+    lat: ed.lat ?? null, lng: ed.lng ?? null,
     media: ed.media.map(m => { const o = { type: m.type }; for(const k of ['id','thumb','poster','chunks','mime','size']) if(m[k] != null) o[k] = m[k]; return o; }),
     createdAt: ed.original?.createdAt || Date.now(),
     updatedAt: Date.now()
   };
+  if(!ed.original){ body.author = getWho(); body.fav = false; body.comments = []; }
   if(!body.title && !body.text && !body.media.length){ toast('제목이나 내용, 사진 중 하나는 남겨주세요'); return; }
   $('#edSave').disabled = true;
   try{
     const ref = ed.id ? db.doc('entries/' + ed.id) : db.collection('entries').doc();
-    await ref.set(body);
+    await ref.set(body, { merge: true });
     const keep = new Set(body.media.flatMap(assetIds));
     const removed = (ed.original?.media || []).flatMap(assetIds).filter(id => !keep.has(id));
     ed = null; close('#editor'); toast('저장했어요 💗');
@@ -747,15 +1128,67 @@ $('#edSave').onclick = async () => {
   }
 };
 
+/* ---------- map picker ---------- */
+const pick = { map: null, marker: null, ll: null, name: '' };
+function setPickMarker(ll){
+  const p = Array.isArray(ll) ? { lat: ll[0], lng: ll[1] } : { lat: ll.lat, lng: ll.lng };
+  pick.ll = p;
+  if(pick.marker) pick.marker.setLatLng([p.lat, p.lng]);
+  else pick.marker = L.marker([p.lat, p.lng], { icon: L.divIcon({ className: 'pin', html: '📍', iconSize: [28, 28], iconAnchor: [14, 26] }) }).addTo(pick.map);
+}
+function updatePinInfo(){
+  const has = ed && ed.lat != null;
+  $('#pinInfo').textContent = has ? `✔ 위치가 지정됐어요 (${ed.lat.toFixed(4)}, ${ed.lng.toFixed(4)})` : '';
+  $('#edPin').textContent = has ? '📍 위치 다시 고르기' : '📍 지도에서 위치 고르기';
+}
+$('#edPin').onclick = () => {
+  if(!window.L){ toast('지도를 불러오지 못했어요. 인터넷 연결을 확인해 주세요'); return; }
+  open('#mapBox'); pick.name = ''; $('#mapResults').innerHTML = ''; $('#mapQ').value = '';
+  setTimeout(() => {
+    if(!pick.map){
+      pick.map = L.map('pickMap').setView([37.5665, 126.978], 12);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(pick.map);
+      pick.map.on('click', e => { pick.name = ''; setPickMarker(e.latlng); });
+    }
+    pick.map.invalidateSize();
+    if(ed && ed.lat != null){ setPickMarker([ed.lat, ed.lng]); pick.map.setView([ed.lat, ed.lng], 16); }
+    else { if(pick.marker){ pick.map.removeLayer(pick.marker); pick.marker = null; } pick.ll = null; }
+  }, 60);
+};
+$('#mapSearchForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const q = $('#mapQ').value.trim(); if(!q) return;
+  const box = $('#mapResults'); box.innerHTML = '<li>검색 중…</li>';
+  try{
+    const r = await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=ko&q=' + encodeURIComponent(q));
+    const j = await r.json();
+    box.innerHTML = j.length ? j.map((x,i) => `<li data-i="${i}">${esc(x.display_name)}</li>`).join('') : '<li>검색 결과가 없어요. 지도를 직접 눌러 정해보세요.</li>';
+    box.querySelectorAll('li[data-i]').forEach(li => li.onclick = () => {
+      const x = j[Number(li.dataset.i)];
+      setPickMarker({ lat: Number(x.lat), lng: Number(x.lon) }); pick.map.setView([Number(x.lat), Number(x.lon)], 16);
+      pick.name = x.name || String(x.display_name).split(',')[0];
+    });
+  }catch(_){ box.innerHTML = '<li>검색하지 못했어요. 지도를 직접 눌러 정해보세요.</li>'; }
+});
+$('#mapOk').onclick = () => {
+  if(!pick.ll){ toast('지도를 눌러 위치를 정해주세요'); return; }
+  ed.lat = pick.ll.lat; ed.lng = pick.ll.lng;
+  if(!$('#edPlace').value.trim() && pick.name) $('#edPlace').value = pick.name;
+  close('#mapBox'); updatePinInfo();
+};
+$('#mapClear').onclick = () => { ed.lat = null; ed.lng = null; close('#mapBox'); updatePinInfo(); };
+$('#mapCancel').onclick = () => close('#mapBox');
+
 /* ---------- settings ---------- */
 $('#openSettings').onclick = () => {
   if(!db){ toast('지금은 저장할 수 없는 화면이에요'); return; }
-  $('#sNames').value = settings.names || ''; $('#sStart').value = settings.startDate || ''; $('#sTitle').value = settings.title || '';
+  $('#sNames').value = settings.names || ''; $('#sStart').value = settings.startDate || ''; $('#sTitle').value = settings.title || ''; $('#sWho').value = getWho();
   open('#settingsBox');
 };
 $('#sCancel').onclick = () => close('#settingsBox');
 $('#sSave').onclick = async () => {
   const body = { names: $('#sNames').value.trim(), startDate: $('#sStart').value, title: $('#sTitle').value.trim() };
+  setWho($('#sWho').value.trim());
   try{ await db.doc('settings/main').set(body); close('#settingsBox'); toast('저장했어요'); }
   catch(err){ toast('저장하지 못했어요 (' + (err.code||'오류') + ')'); }
 };
@@ -804,6 +1237,84 @@ $('#fDelete').onclick = () => {
   });
 };
 
+/* ---------- milestones dialog ---------- */
+$('#msBtn').onclick = () => {
+  if(!settings.startDate) return;
+  const t = todayStr();
+  $('#msList').innerHTML = milestones(settings.startDate, 8).map(m => { const dd = dayDiff(m.date, t); return `<div class="ms-row"><b>${esc(m.label)}</b><span>${esc(fmtDate(m.date))}<br>${dd === 0 ? '오늘 🎉' : 'D-' + dd}</span></div>`; }).join('');
+  open('#msBox');
+};
+$('#msClose').onclick = () => close('#msBox');
+
+/* ---------- backup ---------- */
+const CRC_T = (() => { const t = new Uint32Array(256); for(let n = 0; n < 256; n++){ let c = n; for(let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u8){ let c = 0xFFFFFFFF; for(let i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+/* 압축 없이 묶는 단순한 zip 만들기 (사진·영상은 이미 압축돼 있어요) */
+async function makeZip(files){
+  const enc = new TextEncoder(), parts = [], central = [], now = new Date();
+  const dt = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1);
+  const dd = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+  let offset = 0, cdSize = 0;
+  for(const f of files){
+    const name = enc.encode(f.name), buf = new Uint8Array(await f.blob.arrayBuffer()), crc = crc32(buf), size = buf.length;
+    const h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true);
+    h.setUint16(10, dt, true); h.setUint16(12, dd, true); h.setUint32(14, crc, true); h.setUint32(18, size, true); h.setUint32(22, size, true);
+    h.setUint16(26, name.length, true); h.setUint16(28, 0, true);
+    parts.push(new Blob([h.buffer, name, buf]));
+    const c = new DataView(new ArrayBuffer(46));
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, 0, true);
+    c.setUint16(12, dt, true); c.setUint16(14, dd, true); c.setUint32(16, crc, true); c.setUint32(20, size, true); c.setUint32(24, size, true);
+    c.setUint16(28, name.length, true); c.setUint32(42, offset, true);
+    central.push(c.buffer, name);
+    offset += 30 + name.length + size; cdSize += 46 + name.length;
+  }
+  const e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, cdSize, true); e.setUint32(16, offset, true);
+  return new Blob([...parts, ...central, e.buffer], { type: 'application/zip' });
+}
+const safeName = s => String(s || '').replace(/[\\/:*?"<>|\r\n]+/g, ' ').trim().slice(0, 30) || '제목없는하루';
+const entryText = e => [
+  `[${e.date}] ${e.fav ? '★ ' : ''}${e.mood || ''} ${e.title || '제목 없는 하루'}${e.author ? ' (' + e.author + ')' : ''}`,
+  [e.place && '장소: ' + e.place, (e.tags||[]).length && '태그: ' + e.tags.map(t => '#' + t).join(' '), e.cost != null && '비용: ' + fmtWon(e.cost)].filter(Boolean).join(' | '),
+  e.text || '',
+  ...(e.comments || []).map(c => `  └ ${c.who || ''}: ${c.text}`)
+].filter(x => x !== '' && x !== false).join('\n');
+function baseBackup(){
+  return { app: '기록보관소', exportedAt: new Date().toISOString(), settings, folders: folders.map(({ id, name }) => ({ id, name })), wishes: wishes.map(({ id, ...w }) => w), letters: letters.map(({ id, ...l }) => l) };
+}
+$('#bkJson').onclick = async () => {
+  const data = { ...baseBackup(), entries: entries.map(e => ({ ...e, media: (e.media || []).map(m => ({ type: m.type, mime: m.mime || '', size: m.size || 0 })) })) };
+  try{ await deliver([new File([JSON.stringify(data, null, 2)], `diary_text_${todayStr()}.json`, { type: 'application/json' })]); toast('저장했어요'); }
+  catch(_){ toast('저장하지 못했어요'); }
+};
+$('#bkZip').onclick = async () => {
+  if(!db) return;
+  const es = live().slice().sort((a,b) => (a.date||'').localeCompare(b.date||''));
+  const btn = $('#bkZip'); btn.disabled = true;
+  const files = [], jsonEntries = [], txt = [];
+  try{
+    for(let idx = 0; idx < es.length; idx++){
+      const e = es[idx];
+      toast(`백업 만드는 중… ${idx + 1}/${es.length} (창을 닫지 마세요)`);
+      const dir = `사진영상/${String(idx + 1).padStart(3, '0')}_${e.date}_${safeName(e.title)}`, mediaOut = [];
+      for(let i = 0; i < (e.media || []).length; i++){
+        const m = e.media[i], f = await fileOf(m, String(i + 1)), path = `${dir}/${f.name}`;
+        files.push({ name: path, blob: f }); mediaOut.push({ type: m.type, file: path });
+      }
+      jsonEntries.push({ ...e, media: mediaOut });
+      txt.push(entryText(e) + (mediaOut.length ? `\n  (사진·영상 ${mediaOut.length}개: ${dir}/)` : ''));
+    }
+    const data = { ...baseBackup(), entries: jsonEntries };
+    files.unshift({ name: '기록.json', blob: new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }) },
+                  { name: '기록.txt', blob: new Blob([txt.join('\n\n----------\n\n')], { type: 'text/plain' }) });
+    const zip = await makeZip(files);
+    await deliver([new File([zip], `diary_backup_${todayStr()}.zip`, { type: 'application/zip' })]);
+    toast('백업 파일을 만들었어요');
+  }catch(err){ toast('백업하지 못했어요 (' + (err.message || '오류') + ')'); }
+  btn.disabled = false;
+};
+
 /* ---------- init ---------- */
 
 function startApp(){
@@ -813,13 +1324,18 @@ function startApp(){
     entries = snap.docs.map(d => ({ id: d.id, ...d.data() }))
       .sort((a,b) => (b.date||'').localeCompare(a.date||'') || (b.createdAt||0) - (a.createdAt||0));
     loaded = true; render();
-    if(viewingId && $('#viewer').classList.contains('open') && !entries.find(x=>x.id===viewingId && !x.deletedAt)) close('#viewer');
+    if(viewingId && $('#viewer').classList.contains('open')){
+      const cur = entries.find(x => x.id === viewingId && !x.deletedAt);
+      if(!cur) close('#viewer'); else drawViewer(cur);
+    }
   }, err => { clearTimeout(timer); loaded = true; setStatus('기록을 불러오지 못했어요. 로그인 상태나 Firestore 규칙을 확인해 주세요. (' + (err.code||'오류') + ')'); render(); });
   db.collection('folders').onSnapshot(snap => {
     folders = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (a.createdAt||0) - (b.createdAt||0));
-    if(curFolder !== 'all' && curFolder !== 'none' && curFolder !== 'trash' && !folders.some(f => f.id === curFolder)) curFolder = 'all';
+    if(curFolder !== 'all' && curFolder !== 'none' && curFolder !== 'trash' && !VIEW[curFolder] && !['wish','letters'].includes(curFolder) && !folders.some(f => f.id === curFolder)) curFolder = 'all';
     render();
   }, () => {});
+  db.collection('wishes').onSnapshot(snap => { wishes = snap.docs.map(d => ({ id: d.id, ...d.data() })); render(); }, () => {});
+  db.collection('letters').onSnapshot(snap => { letters = snap.docs.map(d => ({ id: d.id, ...d.data() })); render(); }, () => {});
   db.doc('settings/main').onSnapshot(s => { settings = s.exists ? s.data() : {}; renderHeader(); }, () => {});
 }
 
