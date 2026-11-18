@@ -51,6 +51,9 @@ h1{font-family:"Gowun Batang",serif;font-size:26px;margin:6px 0 2px}
 .chip.add{border-style:dashed;color:var(--rose-deep);background:transparent}
 .chip .fe{margin-left:2px;padding:0 4px;border-radius:6px;background:rgba(255,255,255,.25)}
 
+.orig{display:flex;gap:8px;align-items:center;font-size:14px;margin-top:10px;color:var(--ink)}
+.orig input{width:18px;height:18px;accent-color:var(--rose)}
+
 /* trash */
 .trash-note{background:var(--rose-soft);border-radius:14px;padding:12px 14px;font-size:14px;color:var(--rose-deep);margin-bottom:14px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .trash-card{cursor:default}
@@ -122,6 +125,7 @@ h1{font-family:"Gowun Batang",serif;font-size:26px;margin:6px 0 2px}
 .lb-prev{left:14px;top:50%;transform:translateY(-50%)}
 .lb-next{right:14px;top:50%;transform:translateY(-50%)}
 .lb-close{right:14px;top:14px}
+.lb-save{right:70px;top:14px}
 .lb-count{position:fixed;bottom:16px;left:0;right:0;text-align:center;color:#ddd;font-size:14px}
 
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;transition:.25s;z-index:90;pointer-events:none;max-width:90vw;text-align:center}
@@ -175,7 +179,8 @@ h1{font-family:"Gowun Batang",serif;font-size:26px;margin:6px 0 2px}
     <div class="field">
       <label>사진 · 영상</label>
       <div class="media-grid" id="edMedia"></div>
-      <div class="drop-hint">여러 개를 한 번에 고를 수 있어요. 사진은 자동으로 줄여서 올려요. 영상은 최대 100MB까지, 작게 나눠서 올리느라 시간이 좀 걸려요</div>
+      <div class="drop-hint">여러 개를 한 번에 고를 수 있어요. 사진은 원본 그대로(최대 30MB) 또는 자동으로 줄여서 올려요. 영상은 최대 100MB까지, 작게 나눠서 올리느라 시간이 좀 걸려요</div>
+      <label class="orig"><input type="checkbox" id="origChk" checked> 사진을 원본 화질로 올리기 <span style="color:var(--muted);font-size:12px">(저장 공간을 더 많이 써요)</span></label>
       <input type="file" id="fileInput" accept="image/*,video/*" multiple hidden>
     </div>
     <div class="actions">
@@ -191,6 +196,7 @@ h1{font-family:"Gowun Batang",serif;font-size:26px;margin:6px 0 2px}
     <div id="vBody"></div>
     <div class="actions">
       <button class="btn danger" id="vDelete">삭제</button>
+      <button class="btn ghost" id="vSave">⬇ 사진·영상 저장</button>
       <span class="spacer"></span>
       <button class="btn ghost" id="vClose">닫기</button>
       <button class="btn" id="vEdit">수정</button>
@@ -242,6 +248,7 @@ h1{font-family:"Gowun Batang",serif;font-size:26px;margin:6px 0 2px}
   <div class="lb-media" id="lbMedia"></div>
   <button class="lb-btn lb-prev" id="lbPrev" aria-label="이전">‹</button>
   <button class="lb-btn lb-next" id="lbNext" aria-label="다음">›</button>
+  <button class="lb-btn lb-save" id="lbSave" aria-label="저장" title="원본 저장">⬇</button>
   <button class="lb-btn lb-close" id="lbClose" aria-label="닫기">✕</button>
   <div class="lb-count" id="lbCount"></div>
 </div>
@@ -321,7 +328,7 @@ function renderHeader(){
 
 /* ---------- list ---------- */
 function mediaTag(m, extra=''){
-  if(m.type !== 'video'){ const id = m.thumb || m.id; return id ? `<img data-mid="${esc(id)}" alt="" ${extra}>` : ''; }
+  if(m.type !== 'video'){ const id = m.thumb || m.id; return id ? `<img data-mid="${esc(id)}" alt="" ${extra}>` : `<div class="vph">🖼️</div>`; }
   if(m.poster) return `<img data-mid="${esc(m.poster)}" alt="" ${extra}>`;
   return `<div class="vph">🎬</div>`;
 }
@@ -329,6 +336,7 @@ function mediaTag(m, extra=''){
 const assetIds = m => [m.id, m.thumb, m.poster, ...(m.chunks||[])].filter(Boolean);
 const CHUNK = MAXDOC; // 영상은 1MB보다 작은 조각으로 잘라서 저장
 const MAX_VIDEO = 100 * 1024 * 1024;
+const MAX_PHOTO = 30 * 1024 * 1024;
 const fmtMB = b => (b / 1048576).toFixed(b > 10485760 ? 0 : 1) + 'MB';
 /* big videos are stored in pieces; fetch and join them back into one playable file */
 const vidCache = new Map();
@@ -465,7 +473,7 @@ $('#search').addEventListener('input', render);
 /* ---------- viewer ---------- */
 function openViewer(id){
   const e = entries.find(x=>x.id===id); if(!e) return;
-  viewingId = id;
+  viewingId = id; lbBase = e.date;
   const media = e.media || [];
   $('#vBody').innerHTML = `
     <div class="v-date">${esc(fmtDate(e.date))}</div>
@@ -477,6 +485,7 @@ function openViewer(id){
   hydrate($('#vBody'));
   $('#vEdit').style.display = editable ? '' : 'none';
   $('#vDelete').style.display = editable ? '' : 'none';
+  $('#vSave').style.display = media.length ? '' : 'none';
   open('#viewer');
 }
 $('#vClose').onclick = () => close('#viewer');
@@ -489,6 +498,44 @@ $('#vDelete').onclick = () => {
       close('#viewer'); toast('휴지통으로 옮겼어요');
     }catch(err){ toast('삭제하지 못했어요 (' + (err.code||'오류') + ')'); }
   }, '휴지통으로 옮길게요');
+};
+
+/* ---------- save originals ---------- */
+const EXT = { 'image/jpeg':'jpg', 'image/png':'png', 'image/gif':'gif', 'image/webp':'webp', 'image/heic':'heic', 'image/heif':'heif', 'video/mp4':'mp4', 'video/quicktime':'mov', 'video/webm':'webm' };
+const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+async function fileOf(m, base){
+  const url = await (m.chunks ? videoSrc(m) : loadUrl(m.id));
+  const blob = await (await fetch(url)).blob();
+  const ext = EXT[blob.type] || (m.type === 'video' ? 'mp4' : 'jpg');
+  return new File([blob], `${base}.${ext}`, { type: blob.type });
+}
+async function deliver(files){
+  if(isMobile && navigator.canShare){
+    try{ if(navigator.canShare({ files })){ await navigator.share({ files }); return; } }
+    catch(err){ if(err && err.name === 'AbortError') return; }
+  }
+  for(const f of files){
+    const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 20000);
+    if(files.length > 1) await new Promise(r => setTimeout(r, 400));
+  }
+}
+let lbBase = '';
+$('#lbSave').onclick = async e => {
+  e.stopPropagation();
+  const m = lbItems[lbIdx]; if(!m) return;
+  toast('저장 준비 중…');
+  try{ await deliver([await fileOf(m, `${lbBase}_${lbIdx + 1}`)]); }catch(_){ toast('저장하지 못했어요'); }
+};
+$('#vSave').onclick = async () => {
+  const e = entries.find(x => x.id === viewingId); if(!e || !(e.media||[]).length) return;
+  toast('저장 준비 중… (영상이 있으면 시간이 걸려요)');
+  try{
+    const files = [];
+    for(let i = 0; i < e.media.length; i++) files.push(await fileOf(e.media[i], `${e.date}_${i + 1}`));
+    await deliver(files);
+  }catch(_){ toast('저장하지 못했어요'); }
 };
 
 /* ---------- confirm ---------- */
@@ -505,7 +552,7 @@ async function drawLb(){
   const m = lbItems[lbIdx], tok = ++lbToken, box = $('#lbMedia');
   if(m.type !== 'video'){
     box.innerHTML = `<div class="lb-msg">불러오는 중…</div>`;
-    loadUrl(m.id).then(u => { if(tok === lbToken) box.innerHTML = `<img src="${u}" alt="">`; })
+    (m.chunks ? videoSrc(m, (i,n) => { if(tok===lbToken) box.innerHTML = `<div class="lb-msg">원본 불러오는 중… ${Math.round(i/n*100)}%</div>`; }) : loadUrl(m.id)).then(u => { if(tok === lbToken) box.innerHTML = `<img src="${u}" alt="">`; })
       .catch(() => { if(tok === lbToken) box.innerHTML = `<div class="lb-msg">사진을 불러오지 못했어요</div>`; });
   } else {
     box.innerHTML = `<div class="lb-msg">영상 불러오는 중…</div>`;
@@ -597,6 +644,7 @@ async function makeThumb(file){
 $('#fileInput').addEventListener('change', async e => {
   const files = [...e.target.files]; e.target.value = '';
   const session = ed;
+  const original = $('#origChk').checked;
   const items = files.map(f => {
     const type = f.type.startsWith('video/') ? 'video' : 'image';
     const it = { type, preview: URL.createObjectURL(f), uploading: true, progress: '기다리는 중…' };
@@ -614,10 +662,25 @@ $('#fileInput').addEventListener('change', async e => {
     try{
       if(item.type === 'image'){
         item.progress = '올리는 중…'; redraw();
-        const blob = await compress(f);
-        if(blob.size > MAXDOC) throw new Error('사진이 너무 커서 올릴 수 없어요');
-        item.id = await up(blob, item);
-        if(f.type !== 'image/gif'){ const th = await makeThumb(f); if(th){ try{ item.thumb = await up(th, item); }catch(err){ if(session.cancelled) throw err; } } }
+        if(original){
+          if(f.size > MAX_PHOTO) throw new Error('사진이 너무 커요 (원본은 최대 30MB)');
+          item.mime = f.type || 'image/jpeg';
+          const th = await makeThumb(f);
+          if(th){ try{ item.thumb = await up(th, item); }catch(err){ if(session.cancelled) throw err; } }
+          if(f.size <= CHUNK) item.id = await up(f, item);
+          else {
+            const n = Math.ceil(f.size / CHUNK); item.chunks = [];
+            for(let i = 0; i < n; i++){
+              item.progress = `원본 올리는 중… ${Math.round(i / n * 100)}%`; redraw();
+              item.chunks.push(await up(f.slice(i * CHUNK, Math.min(f.size, (i + 1) * CHUNK), item.mime), item));
+            }
+          }
+        } else {
+          const blob = await compress(f);
+          if(blob.size > MAXDOC) throw new Error('사진이 너무 커서 올릴 수 없어요');
+          item.id = await up(blob, item);
+          if(f.type !== 'image/gif'){ const th = await makeThumb(f); if(th){ try{ item.thumb = await up(th, item); }catch(err){ if(session.cancelled) throw err; } } }
+        }
       } else {
         if(f.size > MAX_VIDEO) throw new Error('영상이 너무 커요 (최대 100MB)');
         item.progress = '준비 중…'; redraw();
@@ -648,6 +711,8 @@ $('#fileInput').addEventListener('change', async e => {
     redraw();
   }
 });
+try{ $('#origChk').checked = localStorage.getItem('origPhoto') !== '0'; }catch(_){}
+$('#origChk').addEventListener('change', () => { try{ localStorage.setItem('origPhoto', $('#origChk').checked ? '1' : '0'); }catch(_){} });
 $('#edCancel').onclick = async () => {
   const s = ed; ed = null; close('#editor'); if(s) s.cancelled = true;
   for(const id of (s?.newly||[])){ try{ await assets.delete(id); }catch(_){} }
